@@ -2,9 +2,11 @@ using BlazorAzureADB2CApp1.Components;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using MudBlazor.Services;
+using BlazorAzureADB2CApp1.Models;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +29,8 @@ builder.Services.AddControllersWithViews(options =>
 
 builder.Services.AddMudServices();
 
+builder.Services.AddDbContext<TestContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 //Åö(c) Add Razor Pages and Microsoft Identity UI for authentication-related pages
 builder.Services.AddRazorPages()

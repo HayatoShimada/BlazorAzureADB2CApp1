@@ -1,0 +1,84 @@
+﻿@page "/register"
+@using BlazorAzureADB2CApp1.Models
+@inject ISnackbar Snackbar
+@inject TestContext DbContext
+
+<MudText Typo="Typo.h3" GutterBottom="true">親情報登録フォーム</MudText>
+<MudText Class="mb-8">以下のフォームに必要な情報を入力してください。</MudText>
+
+<MudCard>
+    <MudForm Model="@parentModel" @ref="form">
+        <MudCardContent>
+            <MudTextField 
+                T="string"
+                @bind-Value="parentModel.EmailAddress"
+                For="@(() => parentModel.EmailAddress)"
+                Label="メールアドレス"
+                Required="true"
+                Immediate="true" />
+
+            <MudTextField 
+                T="string"
+                @bind-Value="parentModel.CurrentAddress"            
+                For="@(() => parentModel.CurrentAddress)"
+                Required="true"
+                Label="現住所"
+                Immediate="true" />
+
+            <MudTextField 
+                T="string"
+                @bind-Value="parentModel.DistrictName"
+                For="@(() => parentModel.DistrictName)"
+                Label="地区名"
+                Immediate="true" />
+
+            <MudTextField 
+                T="string"
+                @bind-Value="parentModel.HomePhoneNumber"
+                For="@(() => parentModel.HomePhoneNumber)"
+                Required="true"
+                Label="自宅電話番号"
+                Immediate="true" />
+        </MudCardContent>
+        
+    </MudForm>
+
+    <MudCardActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await Submit())">Order</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    private MudForm form = new()!;
+    private Parent parentModel = new Parent();
+
+    bool success;
+    string[] errors = { };
+
+    private async Task Submit()
+    {
+        // フォームのバリデーションを実行
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            try
+            {
+                // 親情報をデータベースに保存
+                DbContext.Parents.Add(parentModel);
+                await DbContext.SaveChangesAsync();
+
+                Snackbar.Add("親情報が登録されました！", Severity.Success);
+                parentModel = new Parent(); // フォームをリセット
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"エラーが発生しました: {ex.Message}", Severity.Error);
+            }
+        }
+        else
+        {
+            Snackbar.Add("入力内容を確認してください。", Severity.Warning);
+        }
+    }
+}

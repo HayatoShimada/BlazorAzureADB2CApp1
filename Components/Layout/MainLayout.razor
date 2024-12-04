@@ -3,6 +3,7 @@
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject Models.TestContext DbContext
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -22,7 +23,9 @@
         <NavMenu />
     </MudDrawer>
     <MudMainContent Class="mt-16 pa-4">
-        @Body
+        <CascadingValue Value="IsEmailRegistered">
+            @Body
+        </CascadingValue>
     </MudMainContent>
 </MudLayout>
 
@@ -36,7 +39,27 @@
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
-    private bool? isAuthenticated = null; // 認証状態
+
+    private bool IsEmailRegistered { get; set; } = false; // デフォルトで登録済みと仮定
+    private bool IsLogin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var email = user.FindFirst(ClaimTypes.Email)?.Value;
+            IsLogin = true;
+            if (!string.IsNullOrEmpty(email))
+            {
+                IsEmailRegistered = await Task.Run(() =>
+                    DbContext.Parents.Any(p => p.EmailAddress == email)
+                );
+            }
+        }
+    }
 
     void DrawerToggle()
     {
