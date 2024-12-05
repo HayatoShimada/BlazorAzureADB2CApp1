@@ -6,39 +6,46 @@
 @using BlazorAzureADB2CApp1.Components
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject Models.TestContext DbContext
+@rendermode InteractiveServer
+
 
 <PageTitle>Home</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, @UserName!</MudText>
+<MudText Typo="Typo.h3" GutterBottom="true">Hello</MudText>
 <MudText Class="mb-8">***幼稚園の登録アプリです!</MudText>
 
-@if (UserName == "Guest")
+@if (string.IsNullOrEmpty(usernameCached))
 {
-    <MudAlert Severity="Severity.Normal">
+    <MudAlert Severity="Severity.Warning">
         <MudLink Href="MicrosoftIdentity/Account/SignIn" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
             <b>ログインしてください。</b>
+            @usernameCached
+            @emailCached
         </MudLink>
     </MudAlert>
 
 }
-else if (!IsEmailRegistered && isLogin)
+else if (!string.IsNullOrEmpty(emailCached))
 {
     <MudAlert Severity="Severity.Warning">
         通園登録がされていません。
-        <MudLink Href="/register" Typo="Typo.body2" Color="Color.Primary">登録はこちら。</MudLink>
+        <MudLink Href="/register" 
+            Typo="Typo.body2" 
+            Color="Color.Primary">
+            登録はこちら。
+        </MudLink>
     </MudAlert>
 }
 else
 {
     <MudAlert Severity="Severity.Success">
-        ログイン済みです！ようこそ、@UserName さん！
+        ログイン済みです！ようこそ、@usernameCached さん！
     </MudAlert>
 }
 
 @code {
-    private string UserName { get; set; } = "Guest";
-    [CascadingParameter] public bool IsEmailRegistered { get; set; }
-    private bool isLogin = false;
+    public string usernameCached = string.Empty;
+    public string emailCached = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,14 +54,10 @@ else
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            //★(a)
+            emailCached = user.Claims.FirstOrDefault(c => c.Type == "emails")?.Value ?? string.Empty;
             var givenName = user.FindFirst(ClaimTypes.GivenName)?.Value ?? string.Empty;
             var surname = user.FindFirst(ClaimTypes.Surname)?.Value ?? string.Empty;
-            UserName = $"{givenName} {surname}".Trim();
-           
-            isLogin = true;
+            usernameCached = $"{surname}{givenName}".Trim();
         }
-
-        
     }
 }

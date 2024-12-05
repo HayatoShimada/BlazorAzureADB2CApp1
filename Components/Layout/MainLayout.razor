@@ -14,8 +14,30 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
         <MudSpacer />
+        @if (!IsLogin)
+        {
+            @*★(a)*@
+            <div class="nav-item px-3">
+                <a href="MicrosoftIdentity/Account/SignIn" class="nav-link">ログイン</a>
+            </div>
 
+        }
 
+        else
+        {
+            @*★(b)*@
+            <div class="nav-item px-3">
+
+            </div>
+
+            <div class="nav-item px-3">
+                <p>
+                    @usernameCached 様
+                </p>
+                <a href="MicrosoftIdentity/Account/SignOut" class="nav-link">Logout</a>
+            </div>
+        }
+       
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
@@ -23,9 +45,8 @@
         <NavMenu />
     </MudDrawer>
     <MudMainContent Class="mt-16 pa-4">
-        <CascadingValue Value="IsEmailRegistered">
-            @Body
-        </CascadingValue>
+        @Body
+
     </MudMainContent>
 </MudLayout>
 
@@ -40,8 +61,10 @@
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
 
-    private bool IsEmailRegistered { get; set; } = false; // デフォルトで登録済みと仮定
-    private bool IsLogin = false;
+    private string emailCached = string.Empty;
+    private string usernameCached = string.Empty;
+
+    private bool IsLogin => !string.IsNullOrEmpty(usernameCached);
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,14 +73,10 @@
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            var email = user.FindFirst(ClaimTypes.Email)?.Value;
-            IsLogin = true;
-            if (!string.IsNullOrEmpty(email))
-            {
-                IsEmailRegistered = await Task.Run(() =>
-                    DbContext.Parents.Any(p => p.EmailAddress == email)
-                );
-            }
+            emailCached = user.Claims.FirstOrDefault(c => c.Type == "emails")?.Value ?? string.Empty;
+            var givenName = user.FindFirst(ClaimTypes.GivenName)?.Value ?? string.Empty;
+            var surname = user.FindFirst(ClaimTypes.Surname)?.Value ?? string.Empty;
+            usernameCached = $"{surname}{givenName}".Trim();
         }
     }
 
