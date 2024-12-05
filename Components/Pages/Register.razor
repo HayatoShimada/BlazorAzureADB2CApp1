@@ -9,61 +9,60 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
 
-<MudText Typo="Typo.h3" GutterBottom="true">親情報登録フォーム</MudText>
+<MudText Typo="Typo.h4" GutterBottom="true">登録フォーム</MudText>
 <MudText Class="mb-8">以下のフォームに必要な情報を入力してください。</MudText>
 
 <MudCard>
     <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
         <MudCardContent>
-            <MudTextField T="string"
-                          @bind-Value="parentModel.EmailAddress"
-                          For="@(() => parentModel.EmailAddress)"
-                          Label="メールアドレス"
-                          Required="true"
-                          RequiredError="メールアドレスを入力してください。"
-                          Immediate="true" />
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h5" GutterBottom="true">基本情報</MudText>
 
-            <MudTextField T="string"
-                          @bind-Value="parentModel.CurrentAddress"
-                          For="@(() => parentModel.CurrentAddress)"
-                          Label="現住所"
-                          Required="true"
-                          RequiredError="現住所を入力してください。"
-                          Immediate="true" />
+                <MudTextField T="string" @bind-Value="parentModel.EmailAddress" For="@(() => parentModel.EmailAddress)"
+                    Label="メールアドレス" Required="true" RequiredError="メールアドレスを入力してください。" Immediate="true" />
 
-            <MudTextField T="string"
-                          @bind-Value="parentModel.DistrictName"
-                          For="@(() => parentModel.DistrictName)"
-                          Label="地区名"
-                          Immediate="true" />
+                <MudTextField T="string" @bind-Value="parentModel.CurrentAddress"
+                    For="@(() => parentModel.CurrentAddress)" Label="現住所" Required="true" RequiredError="現住所を入力してください。"
+                    Immediate="true" />
 
-            <MudTextField T="string"
-                          @bind-Value="parentModel.HomePhoneNumber"
-                          For="@(() => parentModel.HomePhoneNumber)"
-                          Required="true"
-                          Label="自宅電話番号"
-                          Immediate="true" />
+                <MudTextField T="string" @bind-Value="parentModel.DistrictName" For="@(() => parentModel.DistrictName)"
+                    Label="地区名" Immediate="true" />
 
-            <h4>緊急連絡先</h4>
+                <MudTextField T="string" @bind-Value="parentModel.HomePhoneNumber"
+                    For="@(() => parentModel.HomePhoneNumber)" Required="true" Label="自宅電話番号" Immediate="true" />
 
-            @foreach (var contact in emergencyModels)
-            {
-                <MudTextField T="string"
-                              @bind-Value="contact.Relation"
-                              Label="続柄"
-                              Required="true"
-                              Immediate="true" />
+                <MudText Typo="Typo.h5" GutterBottom="true">基本情報</MudText>
 
-                <MudTextField T="string"
-                              @bind-Value="contact.Tel"
-                              Label="電話番号"
-                              Required="true"
-                              Immediate="true" />
-            }
+                @foreach (var contact in emergencyModels)
+                {
+                    <MudSelect @bind-Value="contact.Relation" Label="続柄" Placeholder="選択して下さい"
+                        HelperText="緊急連絡先の続柄を入力して下さい。" Required="true">
+                        @foreach (var relation in _relations)
+                        {
+                            <MudSelectItem Value="relation">@relation</MudSelectItem>
+                        }
+                    </MudSelect>
 
-            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="AddEmergencyContact">
-                緊急連絡先を追加
-            </MudButton>
+                    <MudSelect @bind-Value="contact.Type" Label="種別" Placeholder="選択して下さい" HelperText="緊急連絡先の種別を入力して下さい。"
+                        Required="true">
+                        @foreach (var type in _types)
+                        {
+                            <MudSelectItem Value="type">@type</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudTextField T="string" @bind-Value="contact.Tel" Label="電話番号" Required="true" Immediate="true" />
+                }
+
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="AddEmergencyContact">
+                    緊急連絡先を追加
+                </MudButton>
+
+                <MudText Typo="Typo.h5" GutterBottom="true">基本情報</MudText>
+
+
+            </MudStack>
+
         </MudCardContent>
     </MudForm>
 
@@ -77,6 +76,8 @@
     public string usernameCached = string.Empty;
     public string emailCached = string.Empty;
 
+    private string[] _types = { "携帯", "職場", "自宅" };
+    private string[] _relations = { "父", "母", "祖父", "祖母", "その他" };
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -136,10 +137,24 @@
 
     private void AddEmergencyContact()
     {
-        emergencyModels.Add(new EmergencyContact
-            {
-                Relation = string.Empty,
-                Tel = string.Empty,
-            });
+        try
+        {
+            emergencyModels.Add(new EmergencyContact
+                {
+                    ParentId = parentModel.ParentId,
+                    Relation = string.Empty,
+                    Type = string.Empty,
+                    Tel = string.Empty
+                });
+            // 安全に UI を更新
+            InvokeAsync(StateHasChanged);
+
+            Console.WriteLine("緊急連絡先が追加されました。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"エラー: {ex.Message}");
+        }
     }
+
 }
