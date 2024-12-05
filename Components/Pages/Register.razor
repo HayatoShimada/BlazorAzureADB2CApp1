@@ -8,6 +8,9 @@
 @rendermode InteractiveServer
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
+@using FluentValidation
+@using FluentValidation.Results
+
 
 <MudText Typo="Typo.h4" GutterBottom="true">登録フォーム</MudText>
 <MudText Class="mb-8">以下のフォームに必要な情報を入力してください。</MudText>
@@ -31,10 +34,60 @@
                 <MudTextField T="string" @bind-Value="parentModel.HomePhoneNumber"
                     For="@(() => parentModel.HomePhoneNumber)" Required="true" Label="自宅電話番号" Immediate="true" />
 
-                <MudText Typo="Typo.h5" GutterBottom="true">基本情報</MudText>
+                <MudText Typo="Typo.h5" GutterBottom="true">通園経路画像のアップロード</MudText>
+                <MudItem xs="12">
+                    <MudFileUpload T="IReadOnlyList<IBrowserFile>" @ref="@_fileUpload" @bind-Files="_model.Files"
+                        For="@(() => _model.Files)" AppendMultipleFiles Hidden="@false"
+                        InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10" InputStyle="opacity:0"
+                        ErrorText="@string.Empty" tabindex="-1" @ondrop="@ClearDragClass" @ondragenter="@SetDragClass"
+                        @ondragleave="@ClearDragClass" @ondragend="@ClearDragClass">
+                        <ActivatorContent>
+                            <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
+                                <MudText Typo="Typo.h6">
+                                    Drag and drop files here or click
+                                </MudText>
+                                @foreach (var file in _model.Files?.Select(file => file.Name) ??
+                                Enumerable.Empty<string>())
+                                {
+                                    <MudChip T="string" Color="Color.Dark" Text="@file" />
+                                }
+                            </MudPaper>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                    <MudToolBar Gutters="@false" Class="relative d-flex justify-end gap-4">
+                        <MudButton Color="Color.Primary" OnClick="@OpenFilePickerAsync" Variant="Variant.Filled">
+                            Open file picker
+                        </MudButton>
+                        <MudButton Color="Color.Primary"
+                            Disabled="@(!_isValid || !_isTouched || _model.Files is null || !_model.Files.Any())"
+                            OnClick="@Upload" Variant="Variant.Filled">
+                            Upload
+                        </MudButton>
+                        <MudButton Color="Color.Error" Disabled="@(_model.Files is null || !_model.Files.Any())"
+                            OnClick="@ClearAsync" Variant="Variant.Filled">
+                            Clear
+                        </MudButton>
+                    </MudToolBar>
+                </MudItem>
+                <MudItem>
+                    @if (_fileUpload?.ValidationErrors.Any() ?? false)
+                    {
+                        <MudText Color="Color.Error" Typo="@Typo.caption">
+                            @_fileUpload?.ValidationErrors[0]
+                        </MudText>
+                    }
+                </MudItem>
+                <MudItem xs="12">
+                    IsValid: @_isValid - IsTouched: @_isTouched
+                </MudItem>
+                
+                <MudText Typo="Typo.h5" GutterBottom="true">緊急連絡先</MudText>
+
 
                 @foreach (var contact in emergencyModels)
                 {
+                    <MudText Typo="Typo.h6" GutterBottom="true">連絡先: @emergencyModels.Count</MudText>
+
                     <MudSelect @bind-Value="contact.Relation" Label="続柄" Placeholder="選択して下さい"
                         HelperText="緊急連絡先の続柄を入力して下さい。" Required="true">
                         @foreach (var relation in _relations)
@@ -58,11 +111,20 @@
                     緊急連絡先を追加
                 </MudButton>
 
-                <MudText Typo="Typo.h5" GutterBottom="true">基本情報</MudText>
+                <MudText Typo="Typo.h5" GutterBottom="true">子供情報</MudText>
+                @foreach (var child in childModels)
+                {
+                    <MudText Typo="Typo.h6" GutterBottom="true">子供: @childModels.Count</MudText>
 
+                    <MudTextField T="string" @bind-Value="child.Name" Label="名前" Required="true" Immediate="true" />
+
+                }
+
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="AddEmergencyContact">
+                    子供を追加
+                </MudButton>
 
             </MudStack>
-
         </MudCardContent>
     </MudForm>
 
@@ -95,6 +157,8 @@
     private MudForm form = new();
     private Parent parentModel = new Parent();
     private List<EmergencyContact> emergencyModels = new List<EmergencyContact>();
+    private List<Children> childModels = new List<Children>();
+
 
     bool success;
     string[] errors = { };
@@ -120,29 +184,32 @@
                 }
                 await DbContext.SaveChangesAsync();
 
-                Snackbar.Add("親情報と緊急連絡先が登録されました！", Severity.Success);
+                Snackbar.Add("親情報と緊急連絡先が登録されました！", MudBlazor.Severity.Success);
                 parentModel = new Parent(); // フォームをリセット
                 emergencyModels.Clear(); // 緊急連絡先リストをリセット
             }
             catch (Exception ex)
             {
-                Snackbar.Add($"エラーが発生しました: {ex.Message}", Severity.Error);
+                Snackbar.Add($"エラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
             }
         }
         else
         {
-            Snackbar.Add("入力内容を確認してください。", Severity.Warning);
+            Snackbar.Add("入力内容を確認してください。", MudBlazor.Severity.Warning);
         }
     }
 
+    // 緊急連絡先を追加
     private void AddEmergencyContact()
     {
         try
         {
+            var count = emergencyModels.Count;
             emergencyModels.Add(new EmergencyContact
                 {
                     ParentId = parentModel.ParentId,
                     Relation = string.Empty,
+                    Rank = count + 1,
                     Type = string.Empty,
                     Tel = string.Empty
                 });
@@ -155,6 +222,78 @@
         {
             Console.WriteLine($"エラー: {ex.Message}");
         }
+    }
+
+    // 子供を追加
+    private void AddChild()
+    {
+        try
+        {
+            var count = childModels.Count;
+            childModels.Add(new Children
+                {
+                    ParentId = parentModel.ParentId,
+                    Name = string.Empty,
+                });
+            // 安全に UI を更新
+            InvokeAsync(StateHasChanged);
+
+            Console.WriteLine("子供が追加されました。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"エラー: {ex.Message}");
+        }
+    }
+
+    // アップロードロジック
+    public class Model
+    {
+        public IReadOnlyList<IBrowserFile>? Files { get; set; } = new List<IBrowserFile>();
+    }
+
+    private Model _model =  new();
+    private ModelFluentValidator _validationRules = new();
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
+    private bool _isValid;
+    private bool _isTouched;
+    private const string FileContent = "this is content";
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private string _dragClass = DefaultDragClass;
+
+    private void Upload()
+    {
+        // Upload the files here
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+        Snackbar.Add("TODO: Upload your files!");
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private Task ClearAsync()
+        => _fileUpload?.ClearAsync() ?? Task.CompletedTask;
+
+    public class ModelFluentValidator : AbstractValidator<Model>
+    {
+        public ModelFluentValidator()
+        {
+            RuleFor(x => x.Files)
+                .NotEmpty()
+                .WithMessage("There must be at least 1 file.");
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<Model>.CreateWithOptions((Model)model, x => x.IncludeProperties(propertyName)));
+            return result.IsValid ? Array.Empty<string>() : result.Errors.Select(e => e.ErrorMessage);
+        };
     }
 
 }
