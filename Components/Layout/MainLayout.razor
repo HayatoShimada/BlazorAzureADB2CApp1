@@ -11,15 +11,16 @@
 <MudSnackbarProvider />
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+            OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
         <MudSpacer />
         @if (!IsLogin)
         {
             @*★(a)*@
             <div class="nav-item px-3">
-                <a href="MicrosoftIdentity/Account/SignIn" class="nav-link">ログイン</a>
-            </div>
+            <a href="MicrosoftIdentity/Account/SignIn" class="nav-link">ログイン</a>
+        </div>
 
         }
 
@@ -31,13 +32,13 @@
             </div>
 
             <div class="nav-item px-3">
-                <p>
-                    @usernameCached 様
-                </p>
-                <a href="MicrosoftIdentity/Account/SignOut" class="nav-link">Logout</a>
-            </div>
+            <p>
+                @usernameCached 様
+            </p>
+            <a href="MicrosoftIdentity/Account/SignOut" class="nav-link">Logout</a>
+        </div>
         }
-       
+
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>

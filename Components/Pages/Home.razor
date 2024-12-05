@@ -17,30 +17,28 @@
 @if (string.IsNullOrEmpty(usernameCached))
 {
     <MudAlert Severity="Severity.Warning">
-        <MudLink Href="MicrosoftIdentity/Account/SignIn" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-            <b>ログインしてください。</b>
-            @usernameCached
-            @emailCached
-        </MudLink>
-    </MudAlert>
+    <MudLink Href="MicrosoftIdentity/Account/SignIn" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
+        <b>ログインしてください。</b>
+        @usernameCached
+        @emailCached
+    </MudLink>
+</MudAlert>
 
 }
 else if (!string.IsNullOrEmpty(emailCached))
 {
     <MudAlert Severity="Severity.Warning">
-        通園登録がされていません。
-        <MudLink Href="/register" 
-            Typo="Typo.body2" 
-            Color="Color.Primary">
-            登録はこちら。
-        </MudLink>
-    </MudAlert>
+    通園登録がされていません。
+    <MudLink Href="/register" Typo="Typo.body2" Color="Color.Primary">
+        登録はこちら。
+    </MudLink>
+</MudAlert>
 }
 else
 {
     <MudAlert Severity="Severity.Success">
-        ログイン済みです！ようこそ、@usernameCached さん！
-    </MudAlert>
+    ログイン済みです！ようこそ、@usernameCached さん！
+</MudAlert>
 }
 
 @code {
