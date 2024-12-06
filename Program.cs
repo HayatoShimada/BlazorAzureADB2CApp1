@@ -8,14 +8,15 @@ using Microsoft.Identity.Web.UI;
 using MudBlazor.Services;
 using BlazorAzureADB2CApp1.Models;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
+// Azure AD B2C 認証とトークンキャッシュを構成
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAdB2C"))
     .EnableTokenAcquisitionToCallDownstreamApi()
     .AddInMemoryTokenCaches();
 
+// グローバルな認証ポリシーを追加
 builder.Services.AddControllersWithViews(options =>
 {
     var policy = new AuthorizationPolicyBuilder()
@@ -24,42 +25,48 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AuthorizeFilter(policy));
 });
 
+// ロギングの設定
 builder.Services.AddLogging(loggingBuilder =>
 {
     loggingBuilder.AddConsole();
     loggingBuilder.AddDebug();
     loggingBuilder.AddAzureWebAppDiagnostics();
-
 });
 
-
+// MudBlazor サービスを追加
 builder.Services.AddMudServices();
 
+// データベース コンテキストを構成
 builder.Services.AddDbContext<TestContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Razor Pages と Microsoft Identity UI を追加
 builder.Services.AddRazorPages()
     .AddMicrosoftIdentityUI();
 
-// Add services to the container.
+// Interactive Server Components を追加
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// HTTP リクエストパイプラインの構成
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error"); // createScopeForErrors は不要なので削除
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-app.UseAntiforgery();
 
+app.UseRouting();
+
+// 認証と認可を有効化
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Razor Components とルートのマッピング
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
