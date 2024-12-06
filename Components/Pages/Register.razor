@@ -9,6 +9,8 @@
 @using FluentValidation.Results
 @using MudBlazor
 @using Azure.Storage.Blobs
+@using Azure.Storage.Blobs.Models
+@using Azure.Storage.Blobs.Specialized;
 
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
@@ -57,6 +59,30 @@
                     <MudAlert Severity="MudBlazor.Severity.Success">
                         ファイルがアップロードされました！
                     </MudAlert>
+
+                    <MudText Typo="Typo.h5">アップロードされたファイル</MudText>
+
+                    @if (_blobFiles.Any())
+                    {
+                        @foreach (var file in _blobFiles)
+                        {
+                            <MudStack Row="true" Spacing="2">
+                                <MudText Typo="Typo.h6" GutterBottom="true">ファイル名: @file.Name</MudText>
+                                <MudLink Href="@file.Url" Target="_blank">ファイルを開く</MudLink>
+                                <MudButton Color="Color.Secondary" OnClick="() => DeleteFileWithLeaseAsync(file)">削除</MudButton>
+                            </MudStack>
+                            <MudText>
+                                <MudLink Href="@file.Url" Target="_blank">@file.Name</MudLink>
+                            </MudText>
+                        }
+                    }
+                    else
+                    {
+                    }
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadFilesAsync">
+                        アップロードファイルの確認
+                    </MudButton>
                 }
                 else
                 {
@@ -253,7 +279,7 @@
 
     bool success;
     string[] errors = { };
-
+    // 保存ロジック
     private async Task Submit()
     {
         // フォームのバリデーションを実行
@@ -465,5 +491,100 @@
 
     private void ClearDragClass()
         => _dragClass = DefaultDragClass;
+
+
+    // アップロードファイルの表示ロジック
+    private List<BlobFileInfo> _blobFiles = new();
+
+    private async Task LoadFilesAsync()
+    {
+        try
+        {
+            var connectionString = Configuration["AzureBlobStorage:ConnectionString"];
+            var containerName = Configuration["AzureBlobStorage:ContainerName"];
+
+            // BlobServiceClient を作成
+            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            // データベースから PhotoLocation を取得
+            var routes = await DbContext.Routs
+                .Where(r => r.ParentId == parentModel.ParentId && r.PhotoLocation != null)
+                .Select(r => r.PhotoLocation)
+                .ToListAsync();
+
+            // BLOB のリストを取得
+            var files = new List<BlobFileInfo>();
+            await foreach (BlobItem blobItem in blobContainerClient.GetBlobsAsync())
+            {
+                // Blob の名前がデータベース内の PhotoLocation に存在する場合のみ追加
+                if (routes.Contains(blobItem.Name))
+                {
+                    var blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
+                    files.Add(new BlobFileInfo
+                    {
+                        Name = blobItem.Name,
+                        Url = blobClient.Uri.ToString()
+                    });
+                }
+            }
+
+            _blobFiles = files;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"ファイル一覧の取得中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
+        }
+    }
+
+    private async Task DeleteFileWithLeaseAsync(BlobFileInfo file)
+    {
+        try
+        {
+            var connectionString = Configuration["AzureBlobStorage:ConnectionString"];
+            var containerName = Configuration["AzureBlobStorage:ContainerName"];
+
+            // BlobServiceClient を作成
+            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            // BlobClient を作成
+            var blobClient = blobContainerClient.GetBlobClient(file.Name);
+
+            // BlobLeaseClient を作成
+            var leaseClient = new BlobLeaseClient(blobClient);
+
+            // リースを解除
+            @* await leaseClient.RenewAsync();
+            await leaseClient.BreakAsync();
+            Console.WriteLine($"リースが解除されました: {file.Name}"); *@
+            
+            // ファイルを削除
+            await blobClient.DeleteIfExistsAsync();
+            Console.WriteLine($"ファイルが削除されました: {file.Name}");
+
+            // データベースから関連エントリを削除
+            var route = await DbContext.Routs.FirstOrDefaultAsync(r => r.PhotoLocation == file.Name);
+            if (route != null)
+            {
+                DbContext.Routs.Remove(route);
+                await DbContext.SaveChangesAsync();
+            }
+
+            _blobFiles.Remove(file);
+            Snackbar.Add($"ファイル '{file.Name}' が正常に削除されました！", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"ファイルの削除中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
+        }
+    }
+
+
+    private class BlobFileInfo
+    {
+        public string Name { get; set; }
+        public string Url { get; set; }
+    }
 
 }
