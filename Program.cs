@@ -11,13 +11,11 @@ using BlazorAzureADB2CApp1.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Åö(a) Configure Azure AD B2C Authentication using OpenID Connect
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAdB2C"))
     .EnableTokenAcquisitionToCallDownstreamApi()
     .AddInMemoryTokenCaches();
 
-//Åö(b) Add authorization policy requiring authentication for all controllers
 builder.Services.AddControllersWithViews(options =>
 {
     var policy = new AuthorizationPolicyBuilder()
@@ -32,7 +30,6 @@ builder.Services.AddMudServices();
 builder.Services.AddDbContext<TestContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//Åö(c) Add Razor Pages and Microsoft Identity UI for authentication-related pages
 builder.Services.AddRazorPages()
     .AddMicrosoftIdentityUI();
 
@@ -58,7 +55,6 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-//Åö(d) Enable routing for authentication-related UI pages
 app.MapControllers();
 app.MapRazorPages();
 
