@@ -66,6 +66,8 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseAntiforgery();
+
 // Razor Components とルートのマッピング
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
