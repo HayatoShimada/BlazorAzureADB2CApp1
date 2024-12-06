@@ -11,6 +11,8 @@ public partial class Children
 
     public string? Name { get; set; }
 
+    public string? Birthday { get; set; }
+
     public string? AllergyInfo { get; set; }
 
     public string? Notes { get; set; }
@@ -18,6 +20,8 @@ public partial class Children
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
+
+    public int? Rank { get; set; }
 
     public virtual Parent? Parent { get; set; }
 }

@@ -7,6 +7,10 @@ public partial class Parent
 {
     public int ParentId { get; set; }
 
+    public string? Name { get; set; }
+
+    public string? PostalCo { get; set; }
+
     public string? CurrentAddress { get; set; }
 
     public string? DistrictName { get; set; }

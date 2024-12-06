@@ -5,13 +5,13 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ISnackbar Snackbar
 @inject TestContext DbContext
-@rendermode InteractiveServer
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
 @using FluentValidation
 @using FluentValidation.Results
+@using MudBlazor
 
-
+<MudSnackbarProvider />
 <MudText Typo="Typo.h4" GutterBottom="true">登録フォーム</MudText>
 <MudText Class="mb-8">以下のフォームに必要な情報を入力してください。</MudText>
 
@@ -19,10 +19,19 @@
     <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
         <MudCardContent>
             <MudStack Spacing="2">
-                <MudText Typo="Typo.h5" GutterBottom="true">基本情報</MudText>
+
+                @* 基本情報入力 *@
+                <MudText Typo="Typo.h5">基本情報</MudText>
 
                 <MudTextField T="string" @bind-Value="parentModel.EmailAddress" For="@(() => parentModel.EmailAddress)"
-                    Label="メールアドレス" Required="true" RequiredError="メールアドレスを入力してください。" Immediate="true" />
+                    Label="メールアドレス" Required="true" RequiredError="メールアドレスを入力してください。" Immediate="true" /> 
+
+                <MudTextField T="string" @bind-Value="parentModel.Name" For="@(() => parentModel.Name)"
+                    Label="名前" Required="true" RequiredError="名前を入力してください。" Immediate="true" /> 
+
+                <MudTextField T="string" @bind-Value="parentModel.PostalCo" For="@(() => parentModel.PostalCo)"
+                    Counter="8"
+                    Label="郵便番号" Required="true" RequiredError="郵便番号を入力してください。" Immediate="true" /> 
 
                 <MudTextField T="string" @bind-Value="parentModel.CurrentAddress"
                     For="@(() => parentModel.CurrentAddress)" Label="現住所" Required="true" RequiredError="現住所を入力してください。"
@@ -32,9 +41,12 @@
                     Label="地区名" Immediate="true" />
 
                 <MudTextField T="string" @bind-Value="parentModel.HomePhoneNumber"
-                    For="@(() => parentModel.HomePhoneNumber)" Required="true" Label="自宅電話番号" Immediate="true" />
+                    For="@(() => parentModel.HomePhoneNumber)" Required="true" Label="自宅電話番号" Immediate="true"/>
 
-                <MudText Typo="Typo.h5" GutterBottom="true">通園経路画像のアップロード</MudText>
+                <br/>
+
+                @* 書類提出 *@
+                <MudText Typo="Typo.h5">通園経路画像のアップロード</MudText>
                 <MudItem xs="12">
                     <MudFileUpload T="IReadOnlyList<IBrowserFile>" @ref="@_fileUpload" @bind-Files="_model.Files"
                         For="@(() => _model.Files)" AppendMultipleFiles Hidden="@false"
@@ -81,12 +93,19 @@
                     IsValid: @_isValid - IsTouched: @_isTouched
                 </MudItem>
                 
+                <br/>
+
+                @* 緊急連絡先 *@
                 <MudText Typo="Typo.h5" GutterBottom="true">緊急連絡先</MudText>
-
-
                 @foreach (var contact in emergencyModels)
                 {
-                    <MudText Typo="Typo.h6" GutterBottom="true">連絡先: @emergencyModels.Count</MudText>
+                    <MudStack Row="true" Spacing="2">
+                        <MudText Typo="Typo.h6" GutterBottom="true">連絡先: @contact.Rank</MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="() => DeleteEmergencyContact(contact)">
+                            削除
+                        </MudButton>
+
+                    </MudStack>
 
                     <MudSelect @bind-Value="contact.Relation" Label="続柄" Placeholder="選択して下さい"
                         HelperText="緊急連絡先の続柄を入力して下さい。" Required="true">
@@ -107,20 +126,31 @@
                     <MudTextField T="string" @bind-Value="contact.Tel" Label="電話番号" Required="true" Immediate="true" />
                 }
 
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="AddEmergencyContact">
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="AddEmergencyContact">
                     緊急連絡先を追加
                 </MudButton>
+                
+                <br/>
 
+                @* 子供情報 *@
                 <MudText Typo="Typo.h5" GutterBottom="true">子供情報</MudText>
                 @foreach (var child in childModels)
                 {
-                    <MudText Typo="Typo.h6" GutterBottom="true">子供: @childModels.Count</MudText>
+                    <MudStack Row="true" Spacing="2">
+                        <MudText Typo="Typo.h6" GutterBottom="true">子供: @child.Rank</MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="() => DeleteChild(child)">
+                            削除
+                        </MudButton>
+                    </MudStack>
 
                     <MudTextField T="string" @bind-Value="child.Name" Label="名前" Required="true" Immediate="true" />
+                    <MudTextField T="string" @bind-Value="child.Birthday" Label="生年月日" Required="true" Immediate="true" />
+                    <MudTextField T="string" @bind-Value="child.AllergyInfo" Label="アレルギー情報" Immediate="true" />
+                    <MudTextField T="string" @bind-Value="child.Notes" Label="備考" Immediate="true" />
 
                 }
 
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="AddEmergencyContact">
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="AddChild">
                     子供を追加
                 </MudButton>
 
@@ -135,11 +165,12 @@
 
 @code {
 
+    // 初期化
     public string usernameCached = string.Empty;
     public string emailCached = string.Empty;
+    private Parent parentModel = new Parent();
+    private int parentId = 0;
 
-    private string[] _types = { "携帯", "職場", "自宅" };
-    private string[] _relations = { "父", "母", "祖父", "祖母", "その他" };
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -147,18 +178,63 @@
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            emailCached = user.Claims.FirstOrDefault(c => c.Type == "emails")?.Value ?? string.Empty;
+            // 名前の検索
             var givenName = user.FindFirst(ClaimTypes.GivenName)?.Value ?? string.Empty;
             var surname = user.FindFirst(ClaimTypes.Surname)?.Value ?? string.Empty;
             usernameCached = $"{surname}{givenName}".Trim();
+            parentModel.Name = usernameCached;
+
+            // メールアドレスの検索
+            emailCached = user.Claims.FirstOrDefault(c => c.Type == "emails")?.Value ?? string.Empty;
+            parentModel.EmailAddress = emailCached;
+
+            var existingParent = DbContext.Parents.FirstOrDefault(p => p.EmailAddress == emailCached);
+            if (existingParent != null)
+            {
+                parentModel = existingParent;
+            }
+            else 
+            {
+                parentModel = new Parent();
+                parentModel.EmailAddress = emailCached;
+                parentModel.Name = usernameCached;
+                DbContext.Parents.Add(parentModel);
+                await DbContext.SaveChangesAsync();
+                parentId = parentModel.ParentId;
+            }
         }
     }
 
+    // フォームのバリテーションと保存ロジック
     private MudForm form = new();
-    private Parent parentModel = new Parent();
-    private List<EmergencyContact> emergencyModels = new List<EmergencyContact>();
-    private List<Children> childModels = new List<Children>();
+    private List<EmergencyContact> emergencyModels = new List<EmergencyContact>
+    {
+        new EmergencyContact
+        {
+            ParentId = 0,
+            Relation = string.Empty,
+            Rank = 1,
+            Type = string.Empty,
+            Tel = string.Empty
+        }
+    };
 
+    // 子供を追加
+    private List<Children> childModels = new List<Children>{  
+        new Children
+        {
+            Rank = 1,
+            ParentId = 0,
+            Name = string.Empty,
+            Birthday = string.Empty,
+            AllergyInfo = string.Empty,
+            Notes = string.Empty,
+            CreatedAt = DateTime.Now
+        }
+    };
+
+    private string[] _types = { "携帯", "職場", "自宅" };
+    private string[] _relations = { "父", "母", "祖父", "祖母", "その他" };
 
     bool success;
     string[] errors = { };
@@ -173,7 +249,7 @@
             try
             {
                 // 親情報をデータベースに保存
-                DbContext.Parents.Add(parentModel);
+                DbContext.Parents.Update(parentModel);
                 await DbContext.SaveChangesAsync();
 
                 // 緊急連絡先の保存
@@ -181,6 +257,13 @@
                 {
                     contact.ParentId = parentModel.ParentId; // 親のIDを関連付け
                     DbContext.EmergencyContacts.Add(contact);
+                }
+
+                // 子供情報の保存
+                foreach (var child in childModels)
+                {
+                    child.ParentId = parentModel.ParentId; // 親のIDを関連付け
+                    DbContext.Childrens.Add(child);
                 }
                 await DbContext.SaveChangesAsync();
 
@@ -224,7 +307,25 @@
         }
     }
 
-    // 子供を追加
+    // 緊急連絡先を削除
+
+    private void DeleteEmergencyContact(EmergencyContact contact)
+    {
+        try
+        {
+            emergencyModels.Remove(contact);
+            // 安全に UI を更新
+            InvokeAsync(StateHasChanged);
+
+            Console.WriteLine("緊急連絡先が削除されました。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"エラー: {ex.Message}");
+        }
+    }   
+    
+    
     private void AddChild()
     {
         try
@@ -232,8 +333,12 @@
             var count = childModels.Count;
             childModels.Add(new Children
                 {
+                    Rank = count + 1,
                     ParentId = parentModel.ParentId,
                     Name = string.Empty,
+                    AllergyInfo = string.Empty,
+                    Notes = string.Empty,
+                    CreatedAt = DateTime.Now
                 });
             // 安全に UI を更新
             InvokeAsync(StateHasChanged);
@@ -245,6 +350,23 @@
             Console.WriteLine($"エラー: {ex.Message}");
         }
     }
+
+    // 子供を削除
+    private void DeleteChild(Children child)
+    {
+        try
+        {
+            childModels.Remove(child);
+            // 安全に UI を更新
+            InvokeAsync(StateHasChanged);
+
+            Console.WriteLine("緊急連絡先が削除されました。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"エラー: {ex.Message}");
+        }
+    }   
 
     // アップロードロジック
     public class Model

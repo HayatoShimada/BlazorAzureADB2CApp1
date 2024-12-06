@@ -14,24 +14,17 @@
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
             OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3">**題名**</MudText>
         <MudSpacer />
         @if (!IsLogin)
         {
-            @*★(a)*@
             <div class="nav-item px-3">
-            <a href="MicrosoftIdentity/Account/SignIn" class="nav-link">ログイン</a>
-        </div>
-
+                <a href="MicrosoftIdentity/Account/SignIn" class="nav-link">Login</a>
+            </div>
         }
 
         else
         {
-            @*★(b)*@
-            <div class="nav-item px-3">
-
-            </div>
-
             <div class="nav-item px-3">
             <p>
                 @usernameCached 様
@@ -43,12 +36,13 @@
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
+    
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
     </MudDrawer>
+
     <MudMainContent Class="mt-16 pa-4">
         @Body
-
     </MudMainContent>
 </MudLayout>
 
