@@ -6,6 +6,7 @@
 @using BlazorAzureADB2CApp1.Components
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject Models.TestContext DbContext
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
@@ -45,9 +46,15 @@ else
     public string emailCached = string.Empty;
     private int parentId = 0;
     private bool isRegister = true;
+    private bool flag = false;
 
     protected override async Task OnInitializedAsync()
     {
+        if (flag)
+        {
+            return;
+        }
+        flag = true;
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
