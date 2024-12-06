@@ -24,6 +24,14 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AuthorizeFilter(policy));
 });
 
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole();
+    loggingBuilder.AddDebug();
+    loggingBuilder.AddAzureWebAppDiagnostics();
+
+});
+
 
 builder.Services.AddMudServices();
 
