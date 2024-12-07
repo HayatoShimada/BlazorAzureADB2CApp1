@@ -39,27 +39,34 @@ builder.Services.AddLogging(loggingBuilder =>
 builder.Services.AddMudServices();
 
 
+//builder.Services.AddDbContext<TestContext>(options =>
+//{
+//    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+//    // DefaultAzureCredential を使用してアクセストークンを取得
+//    var tokenCredential = new DefaultAzureCredential();
+//    var accessToken = tokenCredential.GetToken(
+//        new Azure.Core.TokenRequestContext(new[] { "https://database.windows.net/.default" })
+//    ).Token;
+
+//    // SqlConnection を初期化
+//    var sqlConnection = new SqlConnection(connectionString)
+//    {
+//        AccessToken = accessToken
+//    };
+
+//    // DbContext に SqlConnection を設定
+//    options.UseSqlServer(sqlConnection);
+//});
+
+var connection = String.Empty;
+
+builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.json");
+connection = builder.Configuration.GetConnectionString("DefaultConnection");
+
+
 builder.Services.AddDbContext<TestContext>(options =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-    // DefaultAzureCredential を使用してアクセストークンを取得
-    var tokenCredential = new DefaultAzureCredential();
-    var accessToken = tokenCredential.GetToken(
-        new Azure.Core.TokenRequestContext(new[] { "https://database.windows.net/.default" })
-    ).Token;
-
-    // SqlConnection を初期化
-    var sqlConnection = new SqlConnection(connectionString)
-    {
-        AccessToken = accessToken
-    };
-
-    // DbContext に SqlConnection を設定
-    options.UseSqlServer(sqlConnection);
-});
-
-
+    options.UseSqlServer(connection));
 
 
 // Razor Pages と Microsoft Identity UI を追加
