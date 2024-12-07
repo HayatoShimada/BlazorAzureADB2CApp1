@@ -43,10 +43,22 @@ builder.Services.AddDbContext<TestContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-    var sqlConnection = new SqlConnection(connectionString);
+    // DefaultAzureCredential を使用してアクセストークンを取得
+    var tokenCredential = new DefaultAzureCredential();
+    var accessToken = tokenCredential.GetToken(
+        new Azure.Core.TokenRequestContext(new[] { "https://database.windows.net/.default" })
+    ).Token;
 
+    // SqlConnection を初期化
+    var sqlConnection = new SqlConnection(connectionString)
+    {
+        AccessToken = accessToken
+    };
+
+    // DbContext に SqlConnection を設定
     options.UseSqlServer(sqlConnection);
 });
+
 
 
 
