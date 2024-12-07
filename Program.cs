@@ -38,35 +38,13 @@ builder.Services.AddLogging(loggingBuilder =>
 // MudBlazor サービスを追加
 builder.Services.AddMudServices();
 
+// Azure SQL Database への接続を構成
+string connectionString =
+    Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING")!;
 
-//builder.Services.AddDbContext<TestContext>(options =>
-//{
-//    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-//    // DefaultAzureCredential を使用してアクセストークンを取得
-//    var tokenCredential = new DefaultAzureCredential();
-//    var accessToken = tokenCredential.GetToken(
-//        new Azure.Core.TokenRequestContext(new[] { "https://database.windows.net/.default" })
-//    ).Token;
-
-//    // SqlConnection を初期化
-//    var sqlConnection = new SqlConnection(connectionString)
-//    {
-//        AccessToken = accessToken
-//    };
-
-//    // DbContext に SqlConnection を設定
-//    options.UseSqlServer(sqlConnection);
-//});
-
-var connection = String.Empty;
-
-builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.json");
-connection = builder.Configuration.GetConnectionString("DefaultConnection");
-
-
+// DbContext の登録
 builder.Services.AddDbContext<TestContext>(options =>
-    options.UseSqlServer(connection));
+    options.UseSqlServer(connectionString));
 
 
 // Razor Pages と Microsoft Identity UI を追加
