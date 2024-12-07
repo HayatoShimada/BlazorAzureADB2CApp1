@@ -44,11 +44,6 @@ builder.Services.AddDbContext<TestContext>(options =>
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
     var sqlConnection = new SqlConnection(connectionString);
-    var token = new DefaultAzureCredential().GetToken(
-        new Azure.Core.TokenRequestContext(new[] { "https://database.windows.net/.default" })
-    ).Token;
-
-    sqlConnection.AccessToken = token;
 
     options.UseSqlServer(sqlConnection);
 });
