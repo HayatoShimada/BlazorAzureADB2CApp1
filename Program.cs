@@ -7,6 +7,8 @@ using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using MudBlazor.Services;
 using BlazorAzureADB2CApp1.Models;
+using Azure.Identity;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,9 +38,21 @@ builder.Services.AddLogging(loggingBuilder =>
 // MudBlazor サービスを追加
 builder.Services.AddMudServices();
 
-// データベース コンテキストを構成
+
 builder.Services.AddDbContext<TestContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    var sqlConnection = new SqlConnection(connectionString)
+    {
+        AccessToken = new DefaultAzureCredential().GetToken(
+            new Azure.Core.TokenRequestContext(new[] { "https://database.windows.net/.default" })
+        ).Token
+    };
+
+    options.UseSqlServer(sqlConnection);
+});
+
 
 // Razor Pages と Microsoft Identity UI を追加
 builder.Services.AddRazorPages()
