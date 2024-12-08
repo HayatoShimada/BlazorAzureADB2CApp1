@@ -8,53 +8,60 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject Models.TestContext DbContext
 @inject NavigationManager Navigation
+@inject ThemeService ThemeService
 
 <PageTitle>Home</PageTitle>
 
 <MudStack AlignItems="AlignItems.Center" Spacing="3" Class="pa-3">
-    <MudImage ObjectFit="ObjectFit.Contain" Src="images/hoikun.svg" Alt="hoikun logo" Class="ma-12" />
+    @if (ThemeService.IsDarkMode)
+    {
+        <MudImage ObjectFit="ObjectFit.Contain" Src="images/hoikun.svg" Alt="hoikun logo" Class="ma-12" />
+    }
+    else
+    {
+        <MudImage ObjectFit="ObjectFit.Contain" Src="images/hoikun_light.svg" Alt="hoikun logo" Class="ma-12" />
+    }
     <MudText>
         「hoikun」は幼稚園・保育園向けのデータ支援アプリケーションです。
     </MudText>
 
+    @* <MudText Class="mb-8">***幼稚園の登録アプリです!</MudText> *@
 
-@* <MudText Class="mb-8">***幼稚園の登録アプリです!</MudText> *@
+    @if (string.IsNullOrEmpty(usernameCached))
+    {
+        <MudAlert Severity="Severity.Warning">
+            <MudLink Href="MicrosoftIdentity/Account/SignIn" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
+                <b>ログインしてください。</b>
+                @usernameCached
+                @emailCached
+            </MudLink>
+        </MudAlert>
 
-@if (string.IsNullOrEmpty(usernameCached))
-{
-    <MudAlert Severity="Severity.Warning">
-    <MudLink Href="MicrosoftIdentity/Account/SignIn" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        <b>ログインしてください。</b>
-        @usernameCached
-        @emailCached
-    </MudLink>
-</MudAlert>
-
-}
-else if (!string.IsNullOrEmpty(emailCached) && !isRegister)
-{
-    <MudAlert Severity="Severity.Warning">
-    通園登録がされていません。
-    <MudLink Href="/register" Typo="Typo.body2" Color="Color.Primary">
-        登録はこちら。
-    </MudLink>
-</MudAlert>
-}
-else
-{
-    <MudAlert Severity="Severity.Success">
-    ログイン済みです！ようこそ、@usernameCached さん！
-</MudAlert>
-    <MudStack Spacing="2">
-        @foreach (var child in DbContext.Childrens.Where(c => c.ParentId == parentId))
-        {
-            <MudText Typo="Typo.h6">お子様情報 @child.Rank</MudText>
-            <MudText Typo="Typo.body2">お名前: @child.Name</MudText>
-            <MudText Typo="Typo.body2">園からの連絡：***あいうえおかきくけこ*** 2024/12/12</MudText>
-            <MudButton Color="Color.Primary">More Info</MudButton>
-        }
+    }
+    else if (!string.IsNullOrEmpty(emailCached) && !isRegister)
+    {
+        <MudAlert Severity="Severity.Warning">
+            通園登録がされていません。
+            <MudLink Href="/register" Typo="Typo.body2" Color="Color.Primary">
+                登録はこちら。
+            </MudLink>
+        </MudAlert>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Success">
+            ログイン済みです！ようこそ、@usernameCached さん！
+        </MudAlert>
+        <MudStack Spacing="2">
+            @foreach (var child in DbContext.Childrens.Where(c => c.ParentId == parentId))
+            {
+                <MudText Typo="Typo.h6">お子様情報 @child.Rank</MudText>
+                <MudText Typo="Typo.body2">お名前: @child.Name</MudText>
+                <MudText Typo="Typo.body2">園からの連絡：***あいうえおかきくけこ*** 2024/12/12</MudText>
+                <MudButton Color="Color.Primary">More Info</MudButton>
+            }
         </MudStack>
-}
+    }
 
 </MudStack>
 @code {
