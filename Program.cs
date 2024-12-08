@@ -7,18 +7,17 @@ using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using MudBlazor.Services;
 using BlazorAzureADB2CApp1.Models;
-using Azure.Identity;
 using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Azure AD B2C ”FØ‚Æƒg[ƒNƒ“ƒLƒƒƒbƒVƒ…‚ğ\¬
+// Azure AD B2C èªè¨¼ã¨ãƒˆãƒ¼ã‚¯ãƒ³ã‚­ãƒ£ãƒƒã‚·ãƒ¥è¨­å®š
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAdB2C"))
     .EnableTokenAcquisitionToCallDownstreamApi()
     .AddInMemoryTokenCaches();
 
-// ƒOƒ[ƒoƒ‹‚È”FØƒ|ƒŠƒV[‚ğ’Ç‰Á
+// ã‚°ãƒ­ãƒ¼ãƒãƒ«èªè¨¼ãƒãƒªã‚·ãƒ¼ã®è¨­å®š
 builder.Services.AddControllersWithViews(options =>
 {
     var policy = new AuthorizationPolicyBuilder()
@@ -27,7 +26,7 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AuthorizeFilter(policy));
 });
 
-// ƒƒMƒ“ƒO‚Ìİ’è
+// ãƒ­ã‚°è¨­å®š
 builder.Services.AddLogging(loggingBuilder =>
 {
     loggingBuilder.AddConsole();
@@ -35,32 +34,41 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddAzureWebAppDiagnostics();
 });
 
-// MudBlazor ƒT[ƒrƒX‚ğ’Ç‰Á
+// MudBlazor ã‚µãƒ¼ãƒ“ã‚¹è¿½åŠ 
 builder.Services.AddMudServices();
 
-// Azure SQL Database ‚Ö‚ÌÚ‘±‚ğ\¬
-string connectionString =
-    Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING")!;
+// Azure SQL Database ã¸ã®æ¥ç¶š
+// ç’°å¢ƒå¤‰æ•°ã‚’å„ªå…ˆã—ã€ç„¡ã„å ´åˆã¯ appsettings ã‹ã‚‰å–å¾—
+string? connectionString = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING");
 
-// DbContext ‚Ì“o˜^
+if (string.IsNullOrEmpty(connectionString))
+{
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+}
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Connection string for the database is not configured.");
+}
+
+// DbContext ç™»éŒ²
 builder.Services.AddDbContext<TestContext>(options =>
     options.UseSqlServer(connectionString));
 
-
-// Razor Pages ‚Æ Microsoft Identity UI ‚ğ’Ç‰Á
+// Razor Pages ã¨ Microsoft Identity UI ã®ç™»éŒ²
 builder.Services.AddRazorPages()
     .AddMicrosoftIdentityUI();
 
-// Interactive Server Components ‚ğ’Ç‰Á
+// Interactive Server Components ã®ç™»éŒ²
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
 
-// HTTP ƒŠƒNƒGƒXƒgƒpƒCƒvƒ‰ƒCƒ“‚Ì\¬
+// é–‹ç™ºç’°å¢ƒç”¨ã®ä¾‹å¤–ãƒšãƒ¼ã‚¸è¨­å®š
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error"); // createScopeForErrors ‚Í•s—v‚È‚Ì‚Åíœ
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
@@ -69,13 +77,13 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// ”FØ‚Æ”F‰Â‚ğ—LŒø‰»
+// èªè¨¼ã¨èªå¯ã‚’æœ‰åŠ¹åŒ–
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseAntiforgery();
 
-// Razor Components ‚Æƒ‹[ƒg‚Ìƒ}ƒbƒsƒ“ƒO
+// Razor Components ã¨ãƒ«ãƒ¼ãƒˆã®ãƒãƒƒãƒ”ãƒ³ã‚°
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
