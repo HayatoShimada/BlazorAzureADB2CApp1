@@ -30,18 +30,18 @@
             <MudSpacer />
             @if (!IsLogin)
             {
-                <div class="nav-item px-3">
-                    <a href="MicrosoftIdentity/Account/SignIn" class="nav-link">Login</a>
-                </div>
+                <MudNavLink Class="d-flex align-content-end " Href="MicrosoftIdentity/Account/SignIn" Icon="@Icons.Material.Filled.Person">Login</MudNavLink>
             }
             else
             {
+                <MudNavLink Class="d-flex align-content-end " Href="MicrosoftIdentity/Account/SignIn" Icon="@Icons.Material.Filled.Person">Login</MudNavLink>
+
                 <div class="nav-item px-3">
-                <p>
-                    @usernameCached 様
-                </p>
-                <a href="MicrosoftIdentity/Account/SignOut" class="nav-link">Logout</a>
-            </div>
+                    <p>
+                        @usernameCached 様
+                    </p>
+                    <a href="MicrosoftIdentity/Account/SignOut" class="nav-link">Logout</a>
+                </div>
             }
         </MudNavMenu>
     </MudDrawer>
