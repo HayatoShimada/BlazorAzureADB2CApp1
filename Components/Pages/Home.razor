@@ -11,7 +11,17 @@
 
 <PageTitle>Home</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">ようこそ</MudText>
+<MudStack Spacing="3">
+    <MudPaper Class="pa-3">
+        <MudImage ObjectFit="ObjectFit.Contain" Src="images/hoikun.png" Alt="hoikun logo" />
+    </MudPaper>
+    <MudPaper Class="pa-3">
+        <MudText>
+            「hoikun」は幼稚園・保育園向けのデータ支援アプリケーションです。
+        </MudText>
+    </MudPaper>
+</MudStack>
+
 @* <MudText Class="mb-8">***幼稚園の登録アプリです!</MudText> *@
 
 @if (string.IsNullOrEmpty(usernameCached))
@@ -37,8 +47,8 @@ else if (!string.IsNullOrEmpty(emailCached) && !isRegister)
 else
 {
     <MudAlert Severity="Severity.Success">
-        ログイン済みです！ようこそ、@usernameCached さん！
-    </MudAlert>
+    ログイン済みです！ようこそ、@usernameCached さん！
+</MudAlert>
     <MudStack Spacing="2">
         @foreach (var child in DbContext.Childrens.Where(c => c.ParentId == parentId))
         {
@@ -47,7 +57,7 @@ else
             <MudText Typo="Typo.body2">園からの連絡：***あいうえおかきくけこ*** 2024/12/12</MudText>
             <MudButton Color="Color.Primary">More Info</MudButton>
         }
-    </MudStack>
+        </MudStack>
 }
 
 @code {
