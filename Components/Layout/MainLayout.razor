@@ -7,6 +7,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject Models.TestContext DbContext
 @inject ThemeService ThemeService
+@inject UserStateService UserStateService
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="ThemeService.IsDarkMode" />
 <MudPopoverProvider />
@@ -62,7 +63,6 @@
 
 @code {
     private bool _drawerOpen = true;
-    private bool _isDarkMode = true;
     private MudTheme? _theme = null;
 
     private string emailCached = string.Empty;
@@ -77,10 +77,10 @@
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            emailCached = user.Claims.FirstOrDefault(c => c.Type == "emails")?.Value ?? string.Empty;
+            UserStateService.Email = user.Claims.FirstOrDefault(c => c.Type == "emails")?.Value ?? string.Empty;
             var givenName = user.FindFirst(ClaimTypes.GivenName)?.Value ?? string.Empty;
             var surname = user.FindFirst(ClaimTypes.Surname)?.Value ?? string.Empty;
-            usernameCached = $"{surname}{givenName}".Trim();
+            UserStateService.Username = $"{surname}{givenName}".Trim();
         }
     }
 
@@ -89,10 +89,12 @@
         _drawerOpen = !_drawerOpen;
     }
 
-    private void DarkModeToggle()
+    private void ToggleDarkMode()
     {
-        _isDarkMode = !_isDarkMode;
+        ThemeService.IsDarkMode = !ThemeService.IsDarkMode;
+
     }
+
     private readonly PaletteLight _lightPalette = new()
         {
             Black = "#110e2d",
@@ -132,10 +134,6 @@
             OverlayLight = "#1e1e2d80",
         };
 
-     private void ToggleDarkMode()
-    {
-        ThemeService.IsDarkMode = !ThemeService.IsDarkMode;
-
-    }
+     
 
 }

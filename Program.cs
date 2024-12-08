@@ -37,6 +37,9 @@ builder.Services.AddLogging(loggingBuilder =>
 // テーマサービスの登録
 builder.Services.AddScoped<ThemeService>();
 
+builder.Services.AddScoped<UserStateService>();
+
+
 // MudBlazor サービス追加
 builder.Services.AddMudServices();
 
