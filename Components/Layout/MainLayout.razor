@@ -33,7 +33,7 @@
                 登録情報
             </MudNavLink>
             <MudSpacer />
-            @if (!IsLogin)
+            @if (!UserStateService.IsLoggedIn)
             {
                 <MudNavLink Class="d-flex align-content-end " Href="MicrosoftIdentity/Account/SignIn"
                     Icon="@Icons.Material.Filled.Person">
@@ -44,7 +44,7 @@
             {
                 <MudNavLink Class="d-flex align-content-end " Href="MicrosoftIdentity/Account/SignOut"
                     Icon="@Icons.Material.Filled.Person">
-                    @usernameCached 様<br />Logout
+                    @UserStateService.Username 様<br />Logout
                 </MudNavLink>
             }
         </MudNavMenu>
@@ -64,11 +64,6 @@
 @code {
     private bool _drawerOpen = true;
     private MudTheme? _theme = null;
-
-    private string emailCached = string.Empty;
-    private string usernameCached = string.Empty;
-
-    private bool IsLogin => !string.IsNullOrEmpty(usernameCached);
 
     protected override async Task OnInitializedAsync()
     {
