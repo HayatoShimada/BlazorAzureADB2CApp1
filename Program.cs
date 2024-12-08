@@ -34,6 +34,9 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddAzureWebAppDiagnostics();
 });
 
+// テーマサービスの登録
+builder.Services.AddScoped<ThemeService>();
+
 // MudBlazor サービス追加
 builder.Services.AddMudServices();
 

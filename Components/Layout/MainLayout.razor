@@ -1,12 +1,14 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using MudBlazor
+
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject Models.TestContext DbContext
-@using MudBlazor
+@inject ThemeService ThemeService
 
-<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudThemeProvider Theme="@_theme" IsDarkMode="ThemeService.IsDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -19,7 +21,7 @@
         <MudSpacer />
 
 
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        <MudIconButton Icon="@(ThemeService.DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@ToggleDarkMode" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
 
@@ -50,7 +52,6 @@
     </MudDrawer>
 
     <MudMainContent Class="mt-16 pa-4">
-        <CascadingAuthenticationState
         @Body
     </MudMainContent>
 </MudLayout>
@@ -133,11 +134,10 @@
             OverlayLight = "#1e1e2d80",
         };
 
-    public string DarkLightModeButtonIcon => _isDarkMode switch
+     private void ToggleDarkMode()
     {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
-    };
+        ThemeService.IsDarkMode = !ThemeService.IsDarkMode;
 
+    }
 
 }
