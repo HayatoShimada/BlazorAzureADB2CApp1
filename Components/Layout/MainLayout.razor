@@ -17,31 +17,34 @@
         <MudImage Src="images/logo.png" Width="32" Height="32" Alt="hoikun logo" />
         <MudText Typo="Typo.h5" Class="ml-1">hoikun</MudText>
         <MudSpacer />
-        
+
 
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
-    
+
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <MudNavMenu>
-            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-            <MudNavLink Href="/profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">登録情報</MudNavLink>
+            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+                Home
+            </MudNavLink>
+            <MudNavLink Href="/profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">
+                登録情報
+            </MudNavLink>
             <MudSpacer />
             @if (!IsLogin)
             {
-                <MudNavLink Class="d-flex align-content-end " Href="MicrosoftIdentity/Account/SignIn" Icon="@Icons.Material.Filled.Person">Login</MudNavLink>
+                <MudNavLink Class="d-flex align-content-end " Href="MicrosoftIdentity/Account/SignIn"
+                    Icon="@Icons.Material.Filled.Person">
+                    Login
+                </MudNavLink>
             }
             else
             {
-                <MudNavLink Class="d-flex align-content-end " Href="MicrosoftIdentity/Account/SignIn" Icon="@Icons.Material.Filled.Person">Login</MudNavLink>
-
-                <div class="nav-item px-3">
-                    <p>
-                        @usernameCached 様
-                    </p>
-                    <a href="MicrosoftIdentity/Account/SignOut" class="nav-link">Logout</a>
-                </div>
+                <MudNavLink Class="d-flex align-content-end " Href="MicrosoftIdentity/Account/SignOut"
+                    Icon="@Icons.Material.Filled.Person">
+                    @usernameCached 様<br />Logout
+                </MudNavLink>
             }
         </MudNavMenu>
     </MudDrawer>
