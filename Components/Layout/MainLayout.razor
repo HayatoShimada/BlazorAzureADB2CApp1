@@ -77,6 +77,12 @@
             var surname = user.FindFirst(ClaimTypes.Surname)?.Value ?? string.Empty;
             UserStateService.Username = $"{surname}{givenName}".Trim();
         }
+        else
+        {
+            UserStateService.Email = string.Empty;
+            UserStateService.Username = string.Empty;
+        }
+
     }
 
     void DrawerToggle()
@@ -128,7 +134,5 @@
             Divider = "#292838",
             OverlayLight = "#1e1e2d80",
         };
-
-     
 
 }
