@@ -1,0 +1,546 @@
+﻿@page "/profile/edit"
+
+@using BlazorAzureADB2CApp1.Models
+@using Microsoft.EntityFrameworkCore
+@using System.Text.RegularExpressions
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using FluentValidation
+@using FluentValidation.Results
+@using MudBlazor
+@using Azure.Storage.Blobs
+@using Azure.Storage.Blobs.Models
+@using Azure.Storage.Blobs.Specialized;
+
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject TestContext DbContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@inject UserStateService UserStateService
+
+<MudSnackbarProvider />
+<MudText Typo="Typo.h4" GutterBottom="true">登録フォーム</MudText>
+<MudText Class="mb-8">以下のフォームに必要な情報を入力してください。</MudText>
+@if (parentModel == null)
+{
+    <MudAlert Severity="MudBlazor.Severity.Warning">
+        通園登録がされていません。
+        <MudLink Href="/register" Typo="Typo.body2" Color="Color.Primary">
+            登録はこちら。
+        </MudLink>
+    </MudAlert>
+
+}
+else
+{
+    <MudCard>
+        <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
+            <MudCardContent>
+                <MudStack Spacing="2">
+
+                    @* 基本情報入力 *@
+                    <MudText Typo="Typo.h5">基本情報</MudText>
+
+                    <MudTextField T="string" @bind-Value="parentModel.Name" For="@(() => parentModel.Name)"
+                                  Label="名前" Required="true" RequiredError="名前を入力してください。" Immediate="true" />
+
+                    <MudTextField T="string" @bind-Value="parentModel.PostalCo" For="@(() => parentModel.PostalCo)"
+                                  Counter="8"
+                                  Label="郵便番号" Required="true" RequiredError="郵便番号を入力してください。" Immediate="true" />
+
+                    <MudTextField T="string" @bind-Value="parentModel.CurrentAddress"
+                                  For="@(() => parentModel.CurrentAddress)" Label="現住所" Required="true" RequiredError="現住所を入力してください。"
+                                  Immediate="true" />
+
+                    <MudTextField T="string" @bind-Value="parentModel.DistrictName" For="@(() => parentModel.DistrictName)"
+                                  Label="地区名" Immediate="true" />
+
+                    <MudTextField T="string" @bind-Value="parentModel.HomePhoneNumber"
+                                  For="@(() => parentModel.HomePhoneNumber)" Required="true" Label="自宅電話番号" Immediate="true" />
+
+                    <br />
+
+                    @* 書類提出 *@
+                    <MudText Typo="Typo.h5">通園経路画像のアップロード</MudText>
+
+                    <MudAlert Severity="MudBlazor.Severity.Success">
+                        ファイルがアップロードされました！
+                    </MudAlert>
+
+                    <MudText Typo="Typo.h5">アップロードされたファイル</MudText>
+
+                    @if (_blobFiles.Any())
+                    {
+                        @foreach (var file in _blobFiles)
+                        {
+                            <MudStack Row="true" Spacing="2">
+                                <MudText Typo="Typo.h6" GutterBottom="true">ファイル名: @file.Name</MudText>
+                                <MudLink Href="@file.Url" Target="_blank">ファイルを開く</MudLink>
+                                <MudButton Color="Color.Secondary" OnClick="() => DeleteFileWithLeaseAsync(file)">削除</MudButton>
+                            </MudStack>
+                            <MudText>
+                                <MudLink Href="@file.Url" Target="_blank">@file.Name</MudLink>
+                            </MudText>
+                        }
+                    }
+                    else
+                    {
+                    }
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadFilesAsync">
+                        アップロードファイルの確認
+                    </MudButton>
+                  
+                    <MudItem xs="12">
+                        <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                                        @ref="@_fileUpload"
+                                        OnFilesChanged="OnInputFileChanged"
+                                        AppendMultipleFiles
+                                        Hidden="@false"
+                                        InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                                        InputStyle="opacity:0"
+                                        tabindex="-1"
+                                        @ondrop="@ClearDragClass"
+                                        @ondragenter="@SetDragClass"
+                                        @ondragleave="@ClearDragClass"
+                                        @ondragend="@ClearDragClass">
+
+                            <ActivatorContent>
+                                <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
+                                    <MudText Typo="Typo.h6">
+                                        Drag and drop files here or click
+                                    </MudText>
+                                    @foreach (var file in _fileNames)
+                                    {
+                                        <MudChip T="string" Color="Color.Dark" Text="@file" tabindex="-1" />
+                                    }
+                                </MudPaper>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                        <MudToolBar Gutters="false" Class="relative d-flex justify-end gap-4">
+                            <MudButton Color="Color.Primary" OnClick="OpenFilePickerAsync" Variant="Variant.Filled">
+                                Open file picker
+                            </MudButton>
+                            <MudButton Color="Color.Primary" Disabled="@(!_fileNames.Any())" OnClick="UploadFilesAsync" Variant="Variant.Filled">
+                                Upload
+                            </MudButton>
+                            <MudButton Color="Color.Error" Disabled="@(!_fileNames.Any())" OnClick="ClearAsync" Variant="Variant.Filled">
+                                Clear
+                            </MudButton>
+                        </MudToolBar>
+                    </MudItem>
+                    <MudItem>
+                        @if (_fileUpload?.ValidationErrors.Any() ?? false)
+                        {
+                            <MudText Color="Color.Error" Typo="@Typo.caption">
+                                @_fileUpload?.ValidationErrors[0]
+                            </MudText>
+                        }
+                    </MudItem>
+                    
+                    <br />
+
+                    @* 緊急連絡先 *@
+                    <MudText Typo="Typo.h5" GutterBottom="true">緊急連絡先</MudText>
+                    @foreach (var contact in emergencyModels)
+                    {
+                        <MudStack Row="true" Spacing="2">
+                            <MudText Typo="Typo.h6" GutterBottom="true">連絡先: @contact.Rank</MudText>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="() => DeleteEmergencyContact(contact)">
+                                削除
+                            </MudButton>
+
+                        </MudStack>
+
+                        <MudSelect @bind-Value="contact.Relation" Label="続柄" Placeholder="選択して下さい"
+                                   HelperText="緊急連絡先の続柄を入力して下さい。" Required="true">
+                            @foreach (var relation in _relations)
+                            {
+                                <MudSelectItem Value="relation">@relation</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudSelect @bind-Value="contact.Type" Label="種別" Placeholder="選択して下さい" HelperText="緊急連絡先の種別を入力して下さい。"
+                                   Required="true">
+                            @foreach (var type in _types)
+                            {
+                                <MudSelectItem Value="type">@type</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudTextField T="string" @bind-Value="contact.Tel" Label="電話番号" Required="true" Immediate="true" />
+                    }
+
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="AddEmergencyContact">
+                        緊急連絡先を追加
+                    </MudButton>
+
+                    <br />
+
+                    @* 子供情報 *@
+                    <MudText Typo="Typo.h5" GutterBottom="true">子供情報</MudText>
+                    @foreach (var child in childModels)
+                    {
+                        <MudStack Row="true" Spacing="2">
+                            <MudText Typo="Typo.h6" GutterBottom="true">子供: @child.Rank</MudText>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="() => DeleteChild(child)">
+                                削除
+                            </MudButton>
+                        </MudStack>
+
+                        <MudTextField T="string" @bind-Value="child.Name" Label="名前" Required="true" Immediate="true" />
+                        <MudTextField T="string" @bind-Value="child.Birthday" Label="生年月日" Required="true" Immediate="true" />
+                        <MudTextField T="string" @bind-Value="child.AllergyInfo" Label="アレルギー情報" Immediate="true" />
+                        <MudTextField T="string" @bind-Value="child.Notes" Label="備考" Immediate="true" />
+
+                    }
+
+                    <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="AddChild">
+                        子供を追加
+                    </MudButton>
+
+                </MudStack>
+            </MudCardContent>
+        </MudForm>
+
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="Submit">登録</MudButton>
+        </MudCardActions>
+    </MudCard>
+    
+}
+
+
+@code {
+
+
+    private Parent parentModel = new Parent();
+    private List<EmergencyContact> emergencyModels = new List<EmergencyContact>();
+    private List<Children> childModels = new List<Children>();
+
+    private int parentId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        parentModel = await DbContext.Parents.FirstOrDefaultAsync(p => p.EmailAddress == UserStateService.Email) ?? new();
+        if (parentModel != null)
+        {
+            emergencyModels = await DbContext.EmergencyContacts
+                                                .Where(e => e.ParentId == parentModel.ParentId)
+                                                .ToListAsync();
+
+            childModels = await DbContext.Childrens
+                                                .Where(e => e.ParentId == parentModel.ParentId)
+                                                .ToListAsync();
+
+        }
+
+    }
+
+    // フォームのバリテーションと保存ロジック
+    private MudForm form = new();
+    
+    private string[] _types = { "携帯", "職場", "自宅" };
+    private string[] _relations = { "父", "母", "祖父", "祖母", "その他" };
+
+    bool success;
+    string[] errors = { };
+    // 保存ロジック
+    private async Task Submit()
+    {
+        // フォームのバリデーションを実行
+        await form.Validate();
+
+        if(parentModel == null)
+        {
+            return;
+        }
+
+        if (success)
+        {
+            try
+            {
+                // 親情報をデータベースに保存
+                DbContext.Parents.Update(parentModel);
+                DbContext.EmergencyContacts.UpdateRange(emergencyModels);
+                DbContext.Childrens.UpdateRange(childModels);
+
+                await DbContext.SaveChangesAsync();
+
+                Snackbar.Add("親情報と緊急連絡先が登録されました！", MudBlazor.Severity.Success);
+                Navigation.NavigateTo("/profile"); // ホームにリダイレクト
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"エラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
+            }
+        }
+        else
+        {
+            Snackbar.Add("入力内容を確認してください。", MudBlazor.Severity.Warning);
+        }
+    }
+
+    // 緊急連絡先を追加
+    private void AddEmergencyContact()
+    {
+        try
+        {
+            var count = emergencyModels.Count;
+            emergencyModels.Add(new EmergencyContact
+                {
+                    ParentId = parentModel.ParentId,
+                    Relation = string.Empty,
+                    Rank = count + 1,
+                    Type = string.Empty,
+                    Tel = string.Empty
+                });
+            // 安全に UI を更新
+            InvokeAsync(StateHasChanged);
+
+            Console.WriteLine("緊急連絡先が追加されました。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"エラー: {ex.Message}");
+        }
+    }
+
+    // 緊急連絡先を削除
+
+    private void DeleteEmergencyContact(EmergencyContact contact)
+    {
+        try
+        {
+            emergencyModels.Remove(contact);
+            // 安全に UI を更新
+            InvokeAsync(StateHasChanged);
+
+            Console.WriteLine("緊急連絡先が削除されました。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"エラー: {ex.Message}");
+        }
+    }
+
+    private void AddChild()
+    {
+        try
+        {
+            var count = childModels.Count;
+            childModels.Add(new Children
+                {
+                    Rank = count + 1,
+                    ParentId = parentModel.ParentId,
+                    Name = string.Empty,
+                    AllergyInfo = string.Empty,
+                    Notes = string.Empty,
+                    CreatedAt = DateTime.Now
+                });
+            // 安全に UI を更新
+            InvokeAsync(StateHasChanged);
+
+            Console.WriteLine("子供が追加されました。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"エラー: {ex.Message}");
+        }
+    }
+
+    // 子供を削除
+    private void DeleteChild(Children child)
+    {
+        try
+        {
+            childModels.Remove(child);
+            // 安全に UI を更新
+            InvokeAsync(StateHasChanged);
+
+            Console.WriteLine("緊急連絡先が削除されました。");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"エラー: {ex.Message}");
+        }
+    }
+
+    // アップロードロジック
+    private bool isFinished = false;
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private readonly List<string> _fileNames = new();
+    private string _dragClass = DefaultDragClass;
+    IList<IBrowserFile> files = new List<IBrowserFile>();
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
+
+    private List<Rout> routeModels = new List<Rout>();
+
+    private async Task ClearAsync()
+    {
+        await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
+        _fileNames.Clear();
+        files.Clear();
+        ClearDragClass();
+    }
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        var browserFiles = e.GetMultipleFiles();
+        foreach (var file in browserFiles)
+        {
+            _fileNames.Add(file.Name);
+            files.Add(file);
+        }
+    }
+
+    private async Task UploadFilesAsync()
+    {
+        try
+        {
+            var connectionString = Configuration["AzureBlobStorage:ConnectionString"];
+            var containerName = Configuration["AzureBlobStorage:ContainerName"];
+
+            // BlobServiceClient を作成
+            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            // コンテナが存在しない場合は作成
+            await blobContainerClient.CreateIfNotExistsAsync();
+
+            // ファイルをアップロード
+            foreach (var file in files)
+            {
+                var newFileName = $"{parentModel.ParentId}_map_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(file.Name)}";
+                var blobClient = blobContainerClient.GetBlobClient(newFileName);
+                routeModels.Add(new Rout
+                    {
+                        ParentId = parentModel.ParentId,
+                        PhotoLocation = newFileName,
+                        CreatedAt = DateTime.Now
+                    });
+                // ファイルをアップロード
+                using var stream = file.OpenReadStream();
+                await blobClient.UploadAsync(stream, overwrite: true);
+            }
+
+            // データベースにファイル情報を登録
+            DbContext.Routs.AddRange(routeModels);
+            await DbContext.SaveChangesAsync();
+
+            Snackbar.Add("ファイルがアップロードされました！", MudBlazor.Severity.Success);
+            isFinished = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"アップロード中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
+        }
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
+
+
+    // アップロードファイルの表示ロジック
+    private List<BlobFileInfo> _blobFiles = new();
+
+    private async Task LoadFilesAsync()
+    {
+        try
+        {
+            var connectionString = Configuration["AzureBlobStorage:ConnectionString"];
+            var containerName = Configuration["AzureBlobStorage:ContainerName"];
+
+            // BlobServiceClient を作成
+            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            // データベースから PhotoLocation を取得
+            var routes = await DbContext.Routs
+                .Where(r => r.ParentId == parentModel.ParentId && r.PhotoLocation != null)
+                .Select(r => r.PhotoLocation)
+                .ToListAsync();
+
+            // BLOB のリストを取得
+            var files = new List<BlobFileInfo>();
+            await foreach (BlobItem blobItem in blobContainerClient.GetBlobsAsync())
+            {
+                // Blob の名前がデータベース内の PhotoLocation に存在する場合のみ追加
+                if (routes.Contains(blobItem.Name))
+                {
+                    var blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
+                    files.Add(new BlobFileInfo
+                        {
+                            Name = blobItem.Name,
+                            Url = blobClient.Uri.ToString()
+                        });
+                }
+            }
+
+            _blobFiles = files;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"ファイル一覧の取得中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
+        }
+    }
+
+    private async Task DeleteFileWithLeaseAsync(BlobFileInfo file)
+    {
+        try
+        {
+            var connectionString = Configuration["AzureBlobStorage:ConnectionString"];
+            var containerName = Configuration["AzureBlobStorage:ContainerName"];
+
+            // BlobServiceClient を作成
+            var blobServiceClient = new BlobServiceClient(connectionString);
+            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+            // BlobClient を作成
+            var blobClient = blobContainerClient.GetBlobClient(file.Name);
+
+            // BlobLeaseClient を作成
+            var leaseClient = new BlobLeaseClient(blobClient);
+
+            // リースを解除
+            @* await leaseClient.RenewAsync();
+            await leaseClient.BreakAsync();
+            Console.WriteLine($"リースが解除されました: {file.Name}"); *@
+
+            // ファイルを削除
+            await blobClient.DeleteIfExistsAsync();
+            Console.WriteLine($"ファイルが削除されました: {file.Name}");
+
+            // データベースから関連エントリを削除
+            var route = await DbContext.Routs.FirstOrDefaultAsync(r => r.PhotoLocation == file.Name);
+            if (route != null)
+            {
+                DbContext.Routs.Remove(route);
+                await DbContext.SaveChangesAsync();
+            }
+
+            _blobFiles.Remove(file);
+            Snackbar.Add($"ファイル '{file.Name}' が正常に削除されました！", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"ファイルの削除中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
+        }
+    }
+
+
+    private class BlobFileInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+    }
+
+}

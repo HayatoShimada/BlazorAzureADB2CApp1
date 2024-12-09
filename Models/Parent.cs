@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BlazorAzureADB2CApp1.Models;
 
@@ -30,4 +31,7 @@ public partial class Parent
     public virtual ICollection<LinkedAccount> LinkedAccounts { get; } = new List<LinkedAccount>();
 
     public virtual ICollection<Rout> Routs { get; } = new List<Rout>();
+
+    [NotMapped]
+    public bool? ShowDetails { get; set; } = false;
 }

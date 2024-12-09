@@ -1,0 +1,125 @@
+﻿@page "/parentslist"
+
+@using BlazorAzureADB2CApp1.Models
+@using Microsoft.EntityFrameworkCore
+@using System.Text.RegularExpressions
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using FluentValidation
+@using FluentValidation.Results
+@using MudBlazor
+
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject TestContext DbContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserStateService UserStateService
+
+<PageTitle>親情報一覧</PageTitle>
+<MudSnackbarProvider />
+<MudText Typo="Typo.h4" GutterBottom="true">親情報一覧</MudText>
+
+<MudSwitch @bind-Value="canCancelEdit" Color="Color.Primary">編集モード</MudSwitch>
+
+@if (parents == null)
+{
+    <p>読み込み中</p>
+}
+else
+{
+    <MudTable Items="@parents" 
+        Hover="true" 
+        Breakpoint="Breakpoint.Sm" 
+        Loading="@_loading" 
+        LoadingProgressColor="Color.Info"  
+        ReadOnly="@ronly" 
+        CanCancelEdit="@canCancelEdit" 
+        ApplyButtonPosition="@applyButtonPosition" 
+        EditButtonPosition="@editButtonPosition" 
+        EditTrigger="@editTrigger"> 
+        
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>名前</MudTh>
+            <MudTh>住所</MudTh>
+            <MudTh>電話番号</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="parent">
+            <MudTd DataLabel="ParentId">@parent.ParentId</MudTd>
+            <MudTd DataLabel="Name">@parent.Name</MudTd>
+            <MudTd DataLabel="Name">@parent.CurrentAddress</MudTd>
+            <MudTd DataLabel="Position">@parent.HomePhoneNumber</MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Outlined" 
+                    Size="Size.Small" 
+                    OnClick="@(() => ShowBtnPress(parent.ParentId))">
+                    @((parent.ShowDetails == true)? "閉じる" : "子供詳細")
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+
+        <ChildRowContent Context="parent">
+        @if (parent.ShowDetails ?? false)
+        {
+            <MudTable Items="@parent.Children" 
+                Hover="true" 
+                Breakpoint="Breakpoint.Sm" 
+                Loading="@_loading" 
+                LoadingProgressColor="Color.Info"  
+                ReadOnly="@ronly" 
+                CanCancelEdit="@canCancelEdit" 
+                ApplyButtonPosition="@applyButtonPosition" 
+                EditButtonPosition="@editButtonPosition" 
+                EditTrigger="@editTrigger"> 
+
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>名前</MudTh>
+                    <MudTh>誕生日</MudTh>
+                    <MudTh>アレルギー</MudTh>
+                </HeaderContent>
+
+                <RowTemplate Context="child">
+                    <MudTd DataLabel="ChildrenId">@child.ChildId</MudTd>
+                    <MudTd DataLabel="Name">@child.Name</MudTd>
+                    <MudTd DataLabel="Position">@child.Birthday</MudTd>
+                    <MudTd DataLabel="Name">@child.AllergyInfo</MudTd>
+                </RowTemplate>
+
+            </MudTable>
+        }
+        </ChildRowContent>
+    </MudTable>
+}
+
+
+@code {
+    private List<Parent>? parents;
+    private bool _loading;
+    private bool ronly = false;
+    private bool canCancelEdit = true;
+
+    private TableApplyButtonPosition applyButtonPosition = TableApplyButtonPosition.End;
+    private TableEditButtonPosition editButtonPosition = TableEditButtonPosition.End;
+    private TableEditTrigger editTrigger = TableEditTrigger.RowClick;
+
+
+    protected override async Task OnInitializedAsync()
+    {        
+        parents =　await DbContext.Parents.ToListAsync();
+
+    }
+
+    private void ShowBtnPress(int parentId)
+    {
+        // 親リストから指定された ParentId を持つオブジェクトを検索
+        var parent = parents?.FirstOrDefault(p => p.ParentId == parentId);
+        if (parent != null)
+        {
+            // ShowDetails プロパティをトグル
+            parent.ShowDetails = !parent.ShowDetails;
+        }
+    }
+
+}

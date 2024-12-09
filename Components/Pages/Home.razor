@@ -9,6 +9,8 @@
 @inject Models.TestContext DbContext
 @inject NavigationManager Navigation
 @inject ThemeService ThemeService
+@inject UserStateService UserStateService
+
 
 <PageTitle>Home</PageTitle>
 
@@ -25,20 +27,16 @@
         「hoikun」は幼稚園・保育園向けのデータ支援アプリケーションです。
     </MudText>
 
-    @* <MudText Class="mb-8">***幼稚園の登録アプリです!</MudText> *@
-
-    @if (string.IsNullOrEmpty(usernameCached))
+    @if (string.IsNullOrEmpty(UserStateService.Email))
     {
         <MudAlert Severity="Severity.Warning">
             <MudLink Href="MicrosoftIdentity/Account/SignIn" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
                 <b>ログインしてください。</b>
-                @usernameCached
-                @emailCached
             </MudLink>
         </MudAlert>
 
     }
-    else if (!string.IsNullOrEmpty(emailCached) && !isRegister)
+    else if (!string.IsNullOrEmpty(UserStateService.Email) && !isRegister)
     {
         <MudAlert Severity="Severity.Warning">
             通園登録がされていません。
@@ -50,10 +48,10 @@
     else
     {
         <MudAlert Severity="Severity.Success">
-            ログイン済みです！ようこそ、@usernameCached さん！
+            ログイン済みです！ようこそ、@UserStateService.Username さん！
         </MudAlert>
         <MudStack Spacing="2">
-            @foreach (var child in DbContext.Childrens.Where(c => c.ParentId == parentId))
+            @foreach (Children child in parent.Children)
             {
                 <MudText Typo="Typo.h6">お子様情報 @child.Rank</MudText>
                 <MudText Typo="Typo.body2">お名前: @child.Name</MudText>
@@ -65,47 +63,36 @@
 
 </MudStack>
 @code {
-    public string usernameCached = string.Empty;
-    public string emailCached = string.Empty;
-    private int parentId = 0;
     private bool isRegister = true;
-    private bool flag = false;
+    private int parentId = 1;
+    private Parent parent = new();
+
+    private void OnThemeChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= OnThemeChanged;
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        if (flag)
+        ThemeService.OnThemeChanged += OnThemeChanged;
+        if(UserStateService.Email != null)
         {
-            return;
-        }
-        flag = true;
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity?.IsAuthenticated == true)
-        {
-            emailCached = user.Claims.FirstOrDefault(c => c.Type == "emails")?.Value ?? string.Empty;
-            var givenName = user.FindFirst(ClaimTypes.GivenName)?.Value ?? string.Empty;
-            var surname = user.FindFirst(ClaimTypes.Surname)?.Value ?? string.Empty;
-            usernameCached = $"{surname}{givenName}".Trim();
-
-            var parent = DbContext.Parents.FirstOrDefault(p => p.EmailAddress == emailCached);
-            parentId = parent?.ParentId ?? 0;
-            if (parent == null)
+            parent = await DbContext.Parents.FirstOrDefaultAsync(p => p.EmailAddress == UserStateService.Email) ?? new() ;
+            if(parent != null && parent.Children != null)
             {
-                parent = new Parent();
-                parent.EmailAddress = emailCached;
-                parent.Name = usernameCached;
-                DbContext.Parents.Add(parent);
-                await DbContext.SaveChangesAsync();
                 parentId = parent.ParentId;
-
+                isRegister = true;
             }
-
-            var child = DbContext.Childrens.FirstOrDefault(c => c.ParentId == parent.ParentId);
-            if (child == null)
+            else
             {
                 isRegister = false;
             }
         }
+
     }
 }

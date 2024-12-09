@@ -32,6 +32,9 @@
             <MudNavLink Href="/profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">
                 登録情報
             </MudNavLink>
+            <MudNavLink Href="/parentslist" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People">
+                登録情報一覧
+            </MudNavLink>
             <MudSpacer />
             @if (!UserStateService.IsLoggedIn)
             {
@@ -81,8 +84,9 @@
         {
             UserStateService.Email = string.Empty;
             UserStateService.Username = string.Empty;
-        }
+            StateHasChanged();
 
+        }
     }
 
     void DrawerToggle()
@@ -93,14 +97,20 @@
     private void ToggleDarkMode()
     {
         ThemeService.IsDarkMode = !ThemeService.IsDarkMode;
+        StateHasChanged();
 
+    }
+
+    private void OnThemeChanged()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private readonly PaletteLight _lightPalette = new()
         {
             Black = "#110e2d",
             AppbarText = "#424242",
-            AppbarBackground = "rgba(255,255,255,0.8)",
+            AppbarBackground = "rgba(26,26,39,0.8)",
             DrawerBackground = "#ffffff",
             GrayLight = "#e8e8e8",
             GrayLighter = "#f9f9f9",
