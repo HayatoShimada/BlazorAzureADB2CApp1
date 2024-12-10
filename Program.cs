@@ -8,6 +8,7 @@ using Microsoft.Identity.Web.UI;
 using MudBlazor.Services;
 using BlazorAzureADB2CApp1.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +70,11 @@ builder.Services.AddRazorPages()
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// サービスの追加
+builder.Services.AddControllers();
+builder.Services.AddRazorComponents();
+builder.Services.AddServerSideBlazor();
+
 var app = builder.Build();
 
 // 開発環境用の例外ページ設定
@@ -87,10 +93,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ルート設定
-app.MapControllers(); // Web APIのエンドポイントを設定
-app.MapBlazorHub(); // Blazor用のHubを設定
-app.MapFallbackToPage("/_Host"); // Blazorのルート設定
+
 
 app.UseAntiforgery();
 
