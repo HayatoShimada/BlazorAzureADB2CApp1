@@ -9,7 +9,7 @@ public class WebhookController : ControllerBase
     public IActionResult ReceiveWebhook([FromBody] dynamic request, [FromHeader(Name = "x-line-signature")] string signature)
     {
         // LINE Messaging APIの署名を検証
-        string channelSecret = "YOUR_CHANNEL_SECRET"; // LINEチャネルのシークレットを設定
+        string channelSecret = "a8930012d9ad73033b62eb3c4b88dd2a"; // LINEチャネルのシークレットを設定
         var body = request.ToString();
 
         if (!ValidateSignature(channelSecret, body, signature))
