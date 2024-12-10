@@ -87,6 +87,11 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ルート設定
+app.MapControllers(); // Web APIのエンドポイントを設定
+app.MapBlazorHub(); // Blazor用のHubを設定
+app.MapFallbackToPage("/_Host"); // Blazorのルート設定
+
 app.UseAntiforgery();
 
 // Razor Components とルートのマッピング

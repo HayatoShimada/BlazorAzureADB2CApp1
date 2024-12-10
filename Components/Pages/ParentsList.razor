@@ -27,17 +27,17 @@
 }
 else
 {
-    <MudTable Items="@parents" 
-        Hover="true" 
-        Breakpoint="Breakpoint.Sm" 
-        Loading="@_loading" 
-        LoadingProgressColor="Color.Info"  
-        ReadOnly="@ronly" 
-        CanCancelEdit="@canCancelEdit" 
-        ApplyButtonPosition="@applyButtonPosition" 
-        EditButtonPosition="@editButtonPosition" 
-        EditTrigger="@editTrigger"> 
-        
+    <MudTable Items="@parents"
+              Hover="true"
+              Breakpoint="Breakpoint.Sm"
+              Loading="@_loading"
+              LoadingProgressColor="Color.Info"
+              ReadOnly="@ronly"
+              CanCancelEdit="@canCancelEdit"
+              ApplyButtonPosition="@applyButtonPosition"
+              EditButtonPosition="@editButtonPosition"
+              EditTrigger="@editTrigger">
+
         <HeaderContent>
             <MudTh>ID</MudTh>
             <MudTh>名前</MudTh>
@@ -48,47 +48,51 @@ else
         <RowTemplate Context="parent">
             <MudTd DataLabel="ParentId">@parent.ParentId</MudTd>
             <MudTd DataLabel="Name">@parent.Name</MudTd>
-            <MudTd DataLabel="Name">@parent.CurrentAddress</MudTd>
-            <MudTd DataLabel="Position">@parent.HomePhoneNumber</MudTd>
+            <MudTd DataLabel="Address">@parent.CurrentAddress</MudTd>
+            <MudTd DataLabel="Phone">@parent.HomePhoneNumber</MudTd>
             <MudTd>
-                <MudButton Variant="Variant.Outlined" 
-                    Size="Size.Small" 
-                    OnClick="@(() => ShowBtnPress(parent.ParentId))">
-                    @((parent.ShowDetails == true)? "閉じる" : "子供詳細")
+                <MudButton Variant="Variant.Outlined"
+                           Size="Size.Small"
+                           OnClick="@(() => ShowBtnPress(parent))">
+                    @((parent.ShowDetails == true) ? "閉じる" : "子供詳細")
                 </MudButton>
             </MudTd>
         </RowTemplate>
 
         <ChildRowContent Context="parent">
-        @if (parent.ShowDetails ?? false)
-        {
-            <MudTable Items="@parent.Children" 
-                Hover="true" 
-                Breakpoint="Breakpoint.Sm" 
-                Loading="@_loading" 
-                LoadingProgressColor="Color.Info"  
-                ReadOnly="@ronly" 
-                CanCancelEdit="@canCancelEdit" 
-                ApplyButtonPosition="@applyButtonPosition" 
-                EditButtonPosition="@editButtonPosition" 
-                EditTrigger="@editTrigger"> 
+            @if (parent.ShowDetails ?? false)
+            {
+                <MudTr>
+                    <td colspan="5">
+                        <MudTable Items="@parent.Children"
+                                  Hover="true"
+                                  Breakpoint="Breakpoint.Sm"
+                                  Loading="@_loading"
+                                  LoadingProgressColor="Color.Info"
+                                  ReadOnly="@ronly"
+                                  CanCancelEdit="@canCancelEdit"
+                                  ApplyButtonPosition="@applyButtonPosition"
+                                  EditButtonPosition="@editButtonPosition"
+                                  EditTrigger="@editTrigger">
 
-                <HeaderContent>
-                    <MudTh>ID</MudTh>
-                    <MudTh>名前</MudTh>
-                    <MudTh>誕生日</MudTh>
-                    <MudTh>アレルギー</MudTh>
-                </HeaderContent>
+                            <HeaderContent>
+                                <MudTh>ID</MudTh>
+                                <MudTh>名前</MudTh>
+                                <MudTh>誕生日</MudTh>
+                                <MudTh>アレルギー</MudTh>
+                            </HeaderContent>
 
-                <RowTemplate Context="child">
-                    <MudTd DataLabel="ChildrenId">@child.ChildId</MudTd>
-                    <MudTd DataLabel="Name">@child.Name</MudTd>
-                    <MudTd DataLabel="Position">@child.Birthday</MudTd>
-                    <MudTd DataLabel="Name">@child.AllergyInfo</MudTd>
-                </RowTemplate>
+                            <RowTemplate Context="child">
+                                <MudTd DataLabel="ChildrenId">@child.ChildId</MudTd>
+                                <MudTd DataLabel="Name">@child.Name</MudTd>
+                                <MudTd DataLabel="Birthday">@child.Birthday</MudTd>
+                                <MudTd DataLabel="AllergyInfo">@child.AllergyInfo</MudTd>
+                            </RowTemplate>
 
-            </MudTable>
-        }
+                        </MudTable>
+                    </td>
+                </MudTr>
+            }
         </ChildRowContent>
     </MudTable>
 }
@@ -96,7 +100,8 @@ else
 
 @code {
     private List<Parent>? parents;
-    private bool _loading;
+
+    private bool _loading = false;
     private bool ronly = false;
     private bool canCancelEdit = true;
 
@@ -107,19 +112,26 @@ else
 
     protected override async Task OnInitializedAsync()
     {        
-        parents =　await DbContext.Parents.ToListAsync();
+        // 親リストを子リストを含めて取得
+        parents = await DbContext.Parents
+            .Include(p => p.Children) // 子リストを同時にロード
+            .ToListAsync();
 
     }
 
-    private void ShowBtnPress(int parentId)
+    private void ShowBtnPress(Parent parent)
     {
-        // 親リストから指定された ParentId を持つオブジェクトを検索
-        var parent = parents?.FirstOrDefault(p => p.ParentId == parentId);
-        if (parent != null)
-        {
-            // ShowDetails プロパティをトグル
-            parent.ShowDetails = !parent.ShowDetails;
-        }
+        // ShowDetails プロパティをトグル
+        parent.ShowDetails = !parent.ShowDetails;
+
+        // State を更新
+        StateHasChanged();
+    }
+
+    private void LineMessage(Children child)
+    {
+        // Line 送信処理
+        Snackbar.Add("Line 送信処理", MudBlazor.Severity.Info);
     }
 
 }
