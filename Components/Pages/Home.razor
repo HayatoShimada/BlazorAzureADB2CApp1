@@ -58,10 +58,15 @@
                 <MudText Typo="Typo.body2">園からの連絡：***あいうえおかきくけこ*** 2024/12/12</MudText>
                 <MudButton Color="Color.Primary">More Info</MudButton>
             }
+            <MudButton Color="Color.Primary" OnClick="Login">LINEでログイン</MudButton>
+            <MudButton Color="Color.Primary" OnClick="LineSocialAPI">LINEアカウント情報</MudButton>
+            <MudText Typo="Typo.body2">@lineProfile</MudText>
         </MudStack>
     }
 
 </MudStack>
+
+
 @code {
     private bool isRegister = true;
     private int parentId = 1;
@@ -95,4 +100,64 @@
         }
 
     }
+
+    private void Login()
+    {
+        Navigation.NavigateTo("signin-callback", true);
+    }
+
+    private string lineProfile = "";
+    private string lineDisplayName = "";
+    private string linePictureUrl = "";
+
+
+    private async Task LineSocialAPI()
+    {
+        try
+        {
+            // トークンを確認
+            if (string.IsNullOrWhiteSpace(UserStateService.AccessToken))
+            {
+                Console.WriteLine("アクセストークンが設定されていません。");
+                return;
+            }
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", UserStateService.AccessToken);
+
+            var response = await client.GetAsync("https://api.line.me/v2/profile");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"HTTPステータスコード: {response.StatusCode}");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"エラー内容: {errorContent}");
+                return;
+            }
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            var profile = System.Text.Json.JsonSerializer.Deserialize<LineProfile>(jsonResponse);
+
+            if (profile != null)
+            {
+                lineProfile = $"ユーザーID: {profile.UserId}";
+                lineDisplayName = profile.DisplayName ?? "表示名なし";
+                linePictureUrl = profile.PictureUrl ?? "";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"例外発生: {ex.Message}");
+        }
+    }
+    // LINEプロフィールのモデルクラス
+    public class LineProfile
+    {
+        public string? UserId { get; set; }
+        public string? DisplayName { get; set; }
+        public string? PictureUrl { get; set; }
+    }
 }
+
+
+   

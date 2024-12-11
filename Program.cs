@@ -7,8 +7,12 @@ using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using MudBlazor.Services;
 using BlazorAzureADB2CApp1.Models;
-using Microsoft.Data.SqlClient;
-using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using System.Text.Json;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +66,45 @@ if (string.IsNullOrEmpty(connectionString))
 builder.Services.AddDbContext<TestContext>(options =>
     options.UseSqlServer(connectionString));
 
+// 認証サービスを登録
+builder.Services.AddAuthentication()
+    .AddCookie("LINE_Cookie") // LINE専用のCookieスキーム
+    .AddOAuth("LINE", options =>
+    {
+        options.ClientId = "2006662452";
+        options.ClientSecret = "411631a9659ad46f3d28421323fd4bb9";
+        options.CallbackPath = new PathString("/signin-line"); // LINEログイン用のコールバック
+
+        options.AuthorizationEndpoint = "https://access.line.me/oauth2/v2.1/authorize";
+        options.TokenEndpoint = "https://api.line.me/oauth2/v2.1/token";
+        options.UserInformationEndpoint = "https://api.line.me/v2/profile";
+
+        options.Scope.Add("profile"); // ユーザーID取得のためのスコープ
+        options.SaveTokens = true;
+
+        options.SignInScheme = "LINE_Cookie"; // LINE用のCookieスキームを指定
+
+        options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "userId");
+        options.ClaimActions.MapJsonKey(ClaimTypes.Name, "displayName");
+
+        options.Events = new OAuthEvents
+        {
+            OnCreatingTicket = async context =>
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, options.UserInformationEndpoint);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
+                var response = await context.Backchannel.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+
+                var user = JsonSerializer.Deserialize<JsonElement>(await response.Content.ReadAsStringAsync());
+                context.RunClaimActions(user);
+            }
+        };
+    });
+
+
+
+
 // Razor Pages と Microsoft Identity UI の登録
 builder.Services.AddRazorPages()
     .AddMicrosoftIdentityUI();
@@ -92,8 +135,6 @@ app.UseRouting();
 // 認証と認可を有効化
 app.UseAuthentication();
 app.UseAuthorization();
-
-
 
 app.UseAntiforgery();
 

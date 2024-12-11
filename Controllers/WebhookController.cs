@@ -1,41 +1,39 @@
-﻿namespace BlazorAzureADB2CApp1.Controllers;
-using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
-[ApiController]
-[Route("webhook")]
-public class WebhookController : ControllerBase
+namespace WebApplication1.Util
 {
-    [HttpPost]
-    public IActionResult ReceiveWebhook([FromBody] dynamic request, [FromHeader(Name = "x-line-signature")] string signature)
+    public class Payload
     {
-        // LINE Messaging APIの署名を検証
-        string channelSecret = "a8930012d9ad73033b62eb3c4b88dd2a"; // LINEチャネルのシークレットを設定
-        var body = request.ToString();
-
-        if (!ValidateSignature(channelSecret, body, signature))
-        {
-            return Unauthorized(); // 401 Unauthorizedを返す
-        }
-
-        // Webhookのリクエスト内容をログに記録
-        Console.WriteLine("Valid Webhook received: " + body);
-
-        // 必要な処理をここに追加
-        // 例: イベント処理やメッセージ送信など
-
-        return Ok(); // 200 OKを返す
+        public string channel { get; set; }
+        public string username { get; set; }
+        public string text { get; set; }
+        public string icon_emoji { get; set; }
+        public string icon_url { get; set; }
     }
 
-    private bool ValidateSignature(string channelSecret, string body, string signature)
+    public static class Slack
     {
-        var encoding = new System.Text.UTF8Encoding();
-        var key = encoding.GetBytes(channelSecret);
-
-        using (var hmac = new System.Security.Cryptography.HMACSHA256(key))
+        public static void PostExec(string value)
         {
-            var hash = hmac.ComputeHash(encoding.GetBytes(body));
-            var computedSignature = Convert.ToBase64String(hash);
-            return computedSignature == signature;
+            var payload = new Payload
+            {
+                channel = "#検証",
+                username = "TestApp1",
+                icon_emoji = ":star:",
+                text = value,
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+
+            var client = new HttpClient();
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var res = client.PostAsync("Webhook URL", content).Result;
         }
     }
 }

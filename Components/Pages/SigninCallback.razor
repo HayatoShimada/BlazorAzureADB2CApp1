@@ -1,0 +1,29 @@
+﻿@page "/signin-callback"
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+@using Microsoft.AspNetCore.Authentication
+@inject UserStateService UserStateService
+
+<MudText Typo="Typo.h6">ログイン処理中...</MudText>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authResult = await HttpContextAccessor.HttpContext.AuthenticateAsync("LINE");
+
+        if (authResult.Succeeded)
+        {
+            // アクセストークンを取得
+            var accessToken = authResult.Properties.GetTokenValue("access_token");
+
+            Console.WriteLine($"アクセストークン: {accessToken}");
+            UserStateService.AccessToken = accessToken;
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            Console.WriteLine("ログインに失敗しました。");
+            Navigation.NavigateTo("/login");
+        }
+    }
+}
