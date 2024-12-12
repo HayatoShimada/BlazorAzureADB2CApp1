@@ -56,6 +56,12 @@ else
                            OnClick="@(() => ShowBtnPress(parent))">
                     @((parent.ShowDetails == true) ? "閉じる" : "子供詳細")
                 </MudButton>
+
+                <MudButton Variant="Variant.Outlined"
+                           Size="Size.Small"
+                           OnClick="@(() => ShowBtnPress(parent))">
+                    @((parent.ShowDetails == true) ? "閉じる" : "通園経路")
+                </MudButton>
             </MudTd>
         </RowTemplate>
 

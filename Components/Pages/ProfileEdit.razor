@@ -8,9 +8,10 @@
 @using FluentValidation
 @using FluentValidation.Results
 @using MudBlazor
+@using Azure.Identity
 @using Azure.Storage.Blobs
 @using Azure.Storage.Blobs.Models
-@using Azure.Storage.Blobs.Specialized;
+@using Azure.Storage.Blobs.Specialized
 
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
@@ -43,21 +44,21 @@ else
                     <MudText Typo="Typo.h5">基本情報</MudText>
 
                     <MudTextField T="string" @bind-Value="parentModel.Name" For="@(() => parentModel.Name)"
-                                  Label="名前" Required="true" RequiredError="名前を入力してください。" Immediate="true" />
+                    Label="名前" Required="true" RequiredError="名前を入力してください。" Immediate="true" />
 
                     <MudTextField T="string" @bind-Value="parentModel.PostalCo" For="@(() => parentModel.PostalCo)"
-                                  Counter="8"
-                                  Label="郵便番号" Required="true" RequiredError="郵便番号を入力してください。" Immediate="true" />
+                    Counter="8"
+                    Label="郵便番号" Required="true" RequiredError="郵便番号を入力してください。" Immediate="true" />
 
                     <MudTextField T="string" @bind-Value="parentModel.CurrentAddress"
-                                  For="@(() => parentModel.CurrentAddress)" Label="現住所" Required="true" RequiredError="現住所を入力してください。"
-                                  Immediate="true" />
+                    For="@(() => parentModel.CurrentAddress)" Label="現住所" Required="true" RequiredError="現住所を入力してください。"
+                    Immediate="true" />
 
                     <MudTextField T="string" @bind-Value="parentModel.DistrictName" For="@(() => parentModel.DistrictName)"
-                                  Label="地区名" Immediate="true" />
+                    Label="地区名" Immediate="true" />
 
                     <MudTextField T="string" @bind-Value="parentModel.HomePhoneNumber"
-                                  For="@(() => parentModel.HomePhoneNumber)" Required="true" Label="自宅電話番号" Immediate="true" />
+                    For="@(() => parentModel.HomePhoneNumber)" Required="true" Label="自宅電話番号" Immediate="true" />
 
                     <br />
 
@@ -91,25 +92,25 @@ else
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadFilesAsync">
                         アップロードファイルの確認
                     </MudButton>
-                  
+
                     <MudItem xs="12">
                         <MudFileUpload T="IReadOnlyList<IBrowserFile>"
-                                        @ref="@_fileUpload"
-                                        OnFilesChanged="OnInputFileChanged"
-                                        AppendMultipleFiles
-                                        Hidden="@false"
-                                        InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
-                                        InputStyle="opacity:0"
-                                        tabindex="-1"
-                                        @ondrop="@ClearDragClass"
-                                        @ondragenter="@SetDragClass"
-                                        @ondragleave="@ClearDragClass"
-                                        @ondragend="@ClearDragClass">
+                        @ref="@_fileUpload"
+                        OnFilesChanged="OnInputFileChanged"
+                        AppendMultipleFiles
+                        Hidden="@false"
+                        InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                        InputStyle="opacity:0"
+                        tabindex="-1"
+                        @ondrop="@ClearDragClass"
+                        @ondragenter="@SetDragClass"
+                        @ondragleave="@ClearDragClass"
+                        @ondragend="@ClearDragClass">
 
                             <ActivatorContent>
                                 <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
                                     <MudText Typo="Typo.h6">
-                                        Drag and drop files here or click
+                                        ドラッグアンドドロップするか、タッチして選択してください。
                                     </MudText>
                                     @foreach (var file in _fileNames)
                                     {
@@ -138,7 +139,7 @@ else
                             </MudText>
                         }
                     </MudItem>
-                    
+
                     <br />
 
                     @* 緊急連絡先 *@
@@ -154,7 +155,7 @@ else
                         </MudStack>
 
                         <MudSelect @bind-Value="contact.Relation" Label="続柄" Placeholder="選択して下さい"
-                                   HelperText="緊急連絡先の続柄を入力して下さい。" Required="true">
+                        HelperText="緊急連絡先の続柄を入力して下さい。" Required="true">
                             @foreach (var relation in _relations)
                             {
                                 <MudSelectItem Value="relation">@relation</MudSelectItem>
@@ -162,7 +163,7 @@ else
                         </MudSelect>
 
                         <MudSelect @bind-Value="contact.Type" Label="種別" Placeholder="選択して下さい" HelperText="緊急連絡先の種別を入力して下さい。"
-                                   Required="true">
+                        Required="true">
                             @foreach (var type in _types)
                             {
                                 <MudSelectItem Value="type">@type</MudSelectItem>
@@ -208,7 +209,7 @@ else
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="Submit">登録</MudButton>
         </MudCardActions>
     </MudCard>
-    
+
 }
 
 
@@ -233,7 +234,7 @@ else
 
     // フォームのバリテーションと保存ロジック
     private MudForm form = new();
-    
+
     private string[] _types = { "携帯", "職場", "自宅" };
     private string[] _relations = { "父", "母", "祖父", "祖母", "その他" };
 
@@ -396,8 +397,8 @@ else
     {
         try
         {
-            var connectionString = Configuration["AzureBlobStorage:ConnectionString"];
-            var containerName = Configuration["AzureBlobStorage:ContainerName"];
+            var connectionString = Configuration["AzureStorageConfig:AccountName"];
+            var containerName = Configuration["AzureStorageConfig:ContainerName"];
 
             // BlobServiceClient を作成
             var blobServiceClient = new BlobServiceClient(connectionString);
@@ -449,12 +450,14 @@ else
     {
         try
         {
-            var connectionString = Configuration["AzureBlobStorage:ConnectionString"];
-            var containerName = Configuration["AzureBlobStorage:ContainerName"];
+            var accountName = Configuration["AzureStorageConfig:AccountName"];
+            var containerName = Configuration["AzureStorageConfig:ContainerName"];
+
+            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
             // BlobServiceClient を作成
-            var blobServiceClient = new BlobServiceClient(connectionString);
-            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
+            new DefaultAzureCredential());
 
             // データベースから PhotoLocation を取得
             var routes = await DbContext.Routs
@@ -464,12 +467,12 @@ else
 
             // BLOB のリストを取得
             var files = new List<BlobFileInfo>();
-            await foreach (BlobItem blobItem in blobContainerClient.GetBlobsAsync())
+            await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
             {
                 // Blob の名前がデータベース内の PhotoLocation に存在する場合のみ追加
                 if (routes.Contains(blobItem.Name))
                 {
-                    var blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
+                    var blobClient = containerClient.GetBlobClient(blobItem.Name);
                     files.Add(new BlobFileInfo
                         {
                             Name = blobItem.Name,
