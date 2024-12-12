@@ -456,12 +456,13 @@ else
         {
             var accountName = Configuration["AzureStorageConfig:AccountName"];
             var containerName = Configuration["AzureStorageConfig:ContainerName"];
+            var clientId = "a678a679-dfb5-4ce0-af40-1c2b0720ce58";
 
             string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
             // BlobServiceClient を作成
             BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
-                                                                            new ManagedIdentityCredential());
+                                                                            new ManagedIdentityCredential(clientId));
 
             // データベースから PhotoLocation を取得
             var routes = await DbContext.Routs
