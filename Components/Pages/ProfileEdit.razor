@@ -1,5 +1,6 @@
 ﻿@page "/profile/edit"
 
+@using Azure.Storage.Sas
 @using BlazorAzureADB2CApp1.Models
 @using Microsoft.EntityFrameworkCore
 @using System.Text.RegularExpressions
@@ -9,6 +10,7 @@
 @using FluentValidation.Results
 @using MudBlazor
 @using Azure.Identity
+@using Azure.Storage
 @using Azure.Storage.Blobs
 @using Azure.Storage.Blobs.Models
 @using Azure.Storage.Blobs.Specialized
@@ -401,21 +403,20 @@ else
     {
         try
         {
-            var connectionString = Configuration["AzureStorageConfig:AccountName"];
+            var accountName = Configuration["AzureStorageConfig:AccountName"];
             var containerName = Configuration["AzureStorageConfig:ContainerName"];
+            var clientId = Configuration["AzureStorageConfig:ClientId"];
 
-            // BlobServiceClient を作成
-            var blobServiceClient = new BlobServiceClient(connectionString);
-            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
-            // コンテナが存在しない場合は作成
-            await blobContainerClient.CreateIfNotExistsAsync();
+            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
+                                                                          new ManagedIdentityCredential(clientId));
 
             // ファイルをアップロード
             foreach (var file in files)
             {
                 var newFileName = $"{parentModel.ParentId}_map_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(file.Name)}";
-                var blobClient = blobContainerClient.GetBlobClient(newFileName);
+                var blobClient = containerClient.GetBlobClient(newFileName);
                 routeModels.Add(new Rout
                     {
                         ParentId = parentModel.ParentId,
@@ -456,7 +457,7 @@ else
         {
             var accountName = Configuration["AzureStorageConfig:AccountName"];
             var containerName = Configuration["AzureStorageConfig:ContainerName"];
-            var clientId = "a678a679-dfb5-4ce0-af40-1c2b0720ce58";
+            var clientId = Configuration["AzureStorageConfig:ClientId"];
 
             string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
@@ -471,14 +472,28 @@ else
 
             // BLOB のリストを取得
             var files = new List<BlobFileInfo>();
+
             await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
             {
                 if (routes.Contains(blobItem.Name))
                 {
                     var blobClient = containerClient.GetBlobClient(blobItem.Name);
 
-                    // SAS トークンを生成
-                    var sasUri = blobClient.GenerateSasUri(Azure.Storage.Sas.BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddHours(1));
+                    // SAS トークンの生成
+                    var sasBuilder = new BlobSasBuilder
+                        {
+                            BlobContainerName = containerName,
+                            BlobName = blobItem.Name,
+                            Resource = "b", // b は BLOB を意味する
+                            ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
+                        };
+                    sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+                    var sasToken = sasBuilder.ToSasQueryParameters(
+                        new StorageSharedKeyCredential(accountName, Configuration["AzureStorageConfig:AccountKey"]));
+
+                    // URL に SAS トークンを付与
+                    var sasUri = new Uri($"{blobClient.Uri}?{sasToken}");
 
                     files.Add(new BlobFileInfo
                         {
@@ -497,27 +512,25 @@ else
     }
 
 
+
     private async Task DeleteFileWithLeaseAsync(BlobFileInfo file)
     {
         try
         {
-            var connectionString = Configuration["AzureBlobStorage:ConnectionString"];
-            var containerName = Configuration["AzureBlobStorage:ContainerName"];
+            var accountName = Configuration["AzureStorageConfig:AccountName"];
+            var containerName = Configuration["AzureStorageConfig:ContainerName"];
+            var clientId = Configuration["AzureStorageConfig:ClientId"];
 
-            // BlobServiceClient を作成
-            var blobServiceClient = new BlobServiceClient(connectionString);
-            var blobContainerClient = blobServiceClient.GetBlobContainerClient(containerName);
+            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
+
+            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
+                                                                          new ManagedIdentityCredential(clientId));
 
             // BlobClient を作成
-            var blobClient = blobContainerClient.GetBlobClient(file.Name);
+            var blobClient = containerClient.GetBlobClient(file.Name);
 
             // BlobLeaseClient を作成
             var leaseClient = new BlobLeaseClient(blobClient);
-
-            // リースを解除
-            @* await leaseClient.RenewAsync();
-            await leaseClient.BreakAsync();
-            Console.WriteLine($"リースが解除されました: {file.Name}"); *@
 
             // ファイルを削除
             await blobClient.DeleteIfExistsAsync();

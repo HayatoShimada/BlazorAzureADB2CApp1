@@ -2,23 +2,32 @@
 using System.Text;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using System.Collections.Generic;
 
 namespace BlazorAzureADB2CApp1.Helpers
 {
     public static class StorageHelper
     {
-        static public async Task UploadBlob(string accountName, string containerName, string blobName, string blobContents)
+        private static IConfiguration Configuration { get; set; }
+
+        static StorageHelper()
         {
-            // Construct the blob container endpoint from the arguments.
-            string containerEndpoint = string.Format("https://{0}.blob.core.windows.net/{1}",
-                                                        accountName,
-                                                        containerName);
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
-            // Get a credential and create a client object for the blob container.
-            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndpoint),
-                                                                            new DefaultAzureCredential());
+            Configuration = builder.Build();
+        }
 
+        static public async Task UploadBlob(string blobName, string blobContents)
+        {
+            var accountName = Configuration["AzureStorageConfig:AccountName"];
+            var containerName = Configuration["AzureStorageConfig:ContainerName"];
+            var clientId = Configuration["AzureStorageConfig:ClientId"];
+
+            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
+
+            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
+                                                                          new ManagedIdentityCredential(clientId));
 
             try
             {
@@ -39,17 +48,17 @@ namespace BlazorAzureADB2CApp1.Helpers
             }
         }
 
-        static public async Task DeleteBlob(string accountName, string containerName, string blobName)
+        static public async Task DeleteBlob(string blobName)
         {
 
-            // Construct the blob container endpoint from the arguments.
-            string containerEndpoint = string.Format("https://{0}.blob.core.windows.net/{1}",
-                                                        accountName,
-                                                        containerName);
+            var accountName = Configuration["AzureStorageConfig:AccountName"];
+            var containerName = Configuration["AzureStorageConfig:ContainerName"];
+            var clientId = Configuration["AzureStorageConfig:ClientId"];
 
-            // Get a credential and create a client object for the blob container.
-            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndpoint),
-                                                                            new DefaultAzureCredential());
+            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
+
+            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
+                                                                          new ManagedIdentityCredential(clientId));
 
             try
             {
@@ -63,18 +72,18 @@ namespace BlazorAzureADB2CApp1.Helpers
             }
 
         }
-        static public async Task<List<CommentBlobDTO>> GetBlobs(string accountName, string containerName)
+        static public async Task<List<CommentBlobDTO>> GetBlobs()
         {
             List<CommentBlobDTO> blobs = new List<CommentBlobDTO>();
 
-            // Construct the blob container endpoint from the arguments.
-            string containerEndpoint = string.Format("https://{0}.blob.core.windows.net/{1}",
-                                                        accountName,
-                                                        containerName);
+            var accountName = Configuration["AzureStorageConfig:AccountName"];
+            var containerName = Configuration["AzureStorageConfig:ContainerName"];
+            var clientId = Configuration["AzureStorageConfig:ClientId"];
 
-            // Get a credential and create a client object for the blob container.
-            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndpoint),
-                                                                            new DefaultAzureCredential());
+            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
+
+            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
+                                                                          new ManagedIdentityCredential(clientId));
 
             await containerClient.CreateIfNotExistsAsync();
 
