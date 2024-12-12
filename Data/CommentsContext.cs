@@ -21,7 +21,7 @@ namespace BlazorAzureADB2CApp1.Data
 
         public async Task<List<Comment>> GetComments()
         {
-            List<CommentBlobDTO> blobs = await StorageHelper.GetBlobs(_config.AccountName, _config.ContainerName);
+            List<CommentBlobDTO> blobs = await StorageHelper.GetBlobs();
 
             List<Comment> comments = new List<Comment>();
             foreach (CommentBlobDTO blob in blobs)
@@ -38,13 +38,13 @@ namespace BlazorAzureADB2CApp1.Data
 
         public async Task CreateComment(Comment comment)
         {
-            await StorageHelper.UploadBlob(_config.AccountName, _config.ContainerName, comment.Name, comment.UserComment);
+            await StorageHelper.UploadBlob(comment.Name, comment.UserComment);
         }
 
         public async Task DeleteComment(Comment comment)
         {
 
-            await StorageHelper.DeleteBlob(_config.AccountName, _config.ContainerName, comment.Name);
+            await StorageHelper.DeleteBlob(comment.Name);
         }
     }
 }
