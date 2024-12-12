@@ -460,9 +460,8 @@ else
 
             string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
-            // BlobServiceClient を作成
             BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
-                                                                            new DefaultAzureCredential());
+                                                                          new ManagedIdentityCredential(clientId));
 
             // データベースから PhotoLocation を取得
             var routes = await DbContext.Routs
@@ -474,14 +473,17 @@ else
             var files = new List<BlobFileInfo>();
             await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
             {
-                // Blob の名前がデータベース内の PhotoLocation に存在する場合のみ追加
                 if (routes.Contains(blobItem.Name))
                 {
                     var blobClient = containerClient.GetBlobClient(blobItem.Name);
+
+                    // SAS トークンを生成
+                    var sasUri = blobClient.GenerateSasUri(Azure.Storage.Sas.BlobSasPermissions.Read, DateTimeOffset.UtcNow.AddHours(1));
+
                     files.Add(new BlobFileInfo
                         {
                             Name = blobItem.Name,
-                            Url = blobClient.Uri.ToString()
+                            Url = sasUri.ToString()
                         });
                 }
             }
@@ -493,6 +495,7 @@ else
             Snackbar.Add($"ファイル一覧の取得中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
         }
     }
+
 
     private async Task DeleteFileWithLeaseAsync(BlobFileInfo file)
     {
