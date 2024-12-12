@@ -228,6 +228,10 @@ else
                                                 .Where(e => e.ParentId == parentModel.ParentId)
                                                 .ToListAsync();
 
+            childModels = await DbContext.Childrens
+                                                .Where(e => e.ParentId == parentModel.ParentId)
+                                                .ToListAsync();
+
         }
 
     }
@@ -457,7 +461,7 @@ else
 
             // BlobServiceClient を作成
             BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
-            new DefaultAzureCredential());
+                                                                            new ManagedIdentityCredential());
 
             // データベースから PhotoLocation を取得
             var routes = await DbContext.Routs
