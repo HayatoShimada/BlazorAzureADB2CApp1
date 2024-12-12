@@ -462,7 +462,7 @@ else
 
             // BlobServiceClient を作成
             BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
-                                                                            new ManagedIdentityCredential(clientId));
+                                                                            new DefaultAzureCredential());
 
             // データベースから PhotoLocation を取得
             var routes = await DbContext.Routs
