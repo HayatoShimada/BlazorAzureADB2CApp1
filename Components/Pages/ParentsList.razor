@@ -21,6 +21,8 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserStateService UserStateService
 @inject IConfiguration Configuration
+@inject BlobStorageService BlobService
+
 
 <PageTitle>親情報一覧</PageTitle>
 <MudSnackbarProvider />
@@ -67,7 +69,7 @@ else
                 <MudButton Variant="Variant.Outlined"
                 Size="Size.Small"
                 OnClick="@(() => RoutePress(parent))">
-                    @((parent.ShowDetails == true) ? "閉じる" : "通園経路")
+                    @((parent.ShowMaps == true) ? "閉じる" : "通園経路")
                 </MudButton>
             </MudTd>
         </RowTemplate>
@@ -172,7 +174,7 @@ else
     {
         // ShowDetails プロパティをトグル
         parent.ShowMaps = !parent.ShowMaps;
-        await LoadFilesAsync(parent);
+        await LoadFiles(parent);
         // State を更新
         StateHasChanged();
     }
@@ -183,79 +185,19 @@ else
         Snackbar.Add("Line 送信処理", MudBlazor.Severity.Info);
     }
 
+
+
     // アップロードファイルの表示ロジック
     private List<BlobFileInfo> _blobFiles = new();
     private bool _isBlobLoading = false;
 
-    private async Task LoadFilesAsync(Parent parent)
+    private async Task LoadFiles(Parent parent)
     {
-        try
-        {
-            var accountName = Configuration["AzureStorageConfig:AccountName"];
-            var containerName = Configuration["AzureStorageConfig:ContainerName"];
-            var clientId = Configuration["AzureStorageConfig:ClientId"];
+        _isBlobLoading = true;
+        _blobFiles = await BlobService.LoadFilesAsync(parent.ParentId);
+        _isBlobLoading = false;
 
-            _isBlobLoading = true;
-            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
-
-            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
-                                                                          new ManagedIdentityCredential(clientId));
-
-            // データベースから PhotoLocation を取得
-            var routes = await DbContext.Routs
-                .Where(r => r.ParentId == parent.ParentId && r.PhotoLocation != null)
-                .Select(r => r.PhotoLocation)
-                .ToListAsync();
-
-            // BLOB のリストを取得
-            var files = new List<BlobFileInfo>();
-
-            await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
-            {
-                if (routes.Contains(blobItem.Name))
-                {
-                    var blobClient = containerClient.GetBlobClient(blobItem.Name);
-
-                    // SAS トークンの生成
-                    var sasBuilder = new BlobSasBuilder
-                        {
-                            BlobContainerName = containerName,
-                            BlobName = blobItem.Name,
-                            Resource = "b", // b は BLOB を意味する
-                            ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
-                        };
-                    sasBuilder.SetPermissions(BlobSasPermissions.Read);
-
-                    var sasToken = sasBuilder.ToSasQueryParameters(
-                        new StorageSharedKeyCredential(accountName, Configuration["AzureStorageConfig:AccountKey"]));
-
-                    // URL に SAS トークンを付与
-                    var sasUri = new Uri($"{blobClient.Uri}?{sasToken}");
-
-                    files.Add(new BlobFileInfo
-                        {
-                            Name = blobItem.Name,
-                            Url = sasUri.ToString()
-                        });
-                }
-            }
-
-            _blobFiles = files;
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"ファイル一覧の取得中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
-        }
-        finally
-        {
-            _isBlobLoading = false;
-        }
     }
 
-    private class BlobFileInfo
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Url { get; set; } = string.Empty;
-    }
 
 }

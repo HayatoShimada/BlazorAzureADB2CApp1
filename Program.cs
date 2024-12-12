@@ -5,11 +5,8 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using Microsoft.Extensions.Configuration;
 using MudBlazor.Services;
 using BlazorAzureADB2CApp1.Models;
-using BlazorAzureADB2CApp1.Data;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
@@ -18,9 +15,8 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Azure Strage Service, Blob Container
-builder.Services.AddTransient<CommentsContext>();
-builder.Services.Configure<AzureStorageConfig>(builder.Configuration.GetSection("AzureStorageConfig"));
+// Add services to the container.
+builder.Services.AddScoped<BlobStorageService>();
 
 // Azure AD B2C 認証とトークンキャッシュ設定
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
