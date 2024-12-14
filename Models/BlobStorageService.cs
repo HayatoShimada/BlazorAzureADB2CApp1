@@ -80,13 +80,13 @@
             BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
                                                                           new ManagedIdentityCredential(clientId));
 
-            var routeModels = new List<Routs>();
+            var routeModels = new List<Rout>();
 
             foreach (var file in files)
             {
                 var newFileName = $"{parentId}_map_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(file.Name)}";
                 var blobClient = containerClient.GetBlobClient(newFileName);
-                routeModels.Add(new Routs
+                routeModels.Add(new Rout
                 {
                     ParentId = parentId,
                     PhotoLocation = newFileName,

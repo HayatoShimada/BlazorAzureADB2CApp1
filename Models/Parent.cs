@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BlazorAzureADB2CApp1.Models;
 
-public partial class Parents
+public partial class Parent
 {
     public int ParentId { get; set; }
 
@@ -24,17 +24,17 @@ public partial class Parents
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual ICollection<Childrens> Childrens { get; } = new List<Childrens>();
+    public virtual ICollection<Children> Children { get; } = new List<Children>();
 
-    public virtual ICollection<EmergencyContacts> EmergencyContacts { get; } = new List<EmergencyContacts>();
+    public virtual ICollection<EmergencyContact> EmergencyContacts { get; } = new List<EmergencyContact>();
 
-    public virtual ICollection<LinkedAccounts> LinkedAccounts { get; } = new List<LinkedAccounts>();
+    public virtual ICollection<LinkedAccount> LinkedAccounts { get; } = new List<LinkedAccount>();
 
-    public virtual ICollection<Routs> Routs { get; } = new List<Routs>();
-
-    [NotMapped]
-    public bool? ShowDetails { get; set; } = false;
+    public virtual ICollection<Rout> Routs { get; } = new List<Rout>();
 
     [NotMapped]
-    public bool? ShowMaps { get; set; } = false;
+    public bool? ShowDetail { get; set; }
+
+    [NotMapped]
+    public bool? ShowMap { get; set; }
 }

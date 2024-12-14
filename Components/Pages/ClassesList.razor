@@ -23,6 +23,16 @@
 @inject IConfiguration Configuration
 @inject BlobStorageService BlobService
 
+<MudCard>
+    <MudCardContent>
+        <MudTextField Label="クラス名" HelperText="最大8文字まで。"
+                      @bind-Value="inputClass.Name" For="@(() => inputClass.Name)" />
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">登録</MudButton>
+    </MudCardActions>
+</MudCard>
+
 @if (classes == null)
 {
     <p>読み込み中</p>
@@ -41,7 +51,7 @@ else
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="ParentId">@context.ClassId</MudTd>
+            <MudTd DataLabel="ClassId">@context.ClassesId</MudTd>
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd>
             </MudTd>
@@ -51,9 +61,15 @@ else
 }
 
 @code {
+    private Class? inputClass = new();
 
-    private List<Models.Classes>? classes;
+    private List<Class>? classes;
     private bool _loading = false;
+
+    bool success;
+    string[] errors = { };
+    MudTextField<string> pwField1;
+    MudForm form;
 
     protected override async Task OnInitializedAsync()
     {

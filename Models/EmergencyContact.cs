@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BlazorAzureADB2CApp1.Models;
 
-public partial class EmergencyContacts
+public partial class EmergencyContact
 {
     public int ContactId { get; set; }
 
@@ -21,5 +21,5 @@ public partial class EmergencyContacts
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Parents? Parent { get; set; }
+    public virtual Parent? Parent { get; set; }
 }

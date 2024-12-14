@@ -215,7 +215,7 @@
     // 初期化
     public string usernameCached = string.Empty;
     public string emailCached = string.Empty;
-    private Parents parentModel = new Parents();
+    private Parent parentModel = new Parent();
     private int parentId = 0;
 
     protected override async Task OnInitializedAsync()
@@ -242,7 +242,7 @@
             }
             else 
             {
-                parentModel = new Parents();
+                parentModel = new Parent();
                 parentModel.EmailAddress = emailCached;
                 parentModel.Name = usernameCached;
                 DbContext.Parents.Add(parentModel);
@@ -254,9 +254,9 @@
 
     // フォームのバリテーションと保存ロジック
     private MudForm form = new();
-    private List<EmergencyContacts> emergencyModels = new List<EmergencyContacts>
+    private List<EmergencyContact> emergencyModels = new List<EmergencyContact>
     {
-        new EmergencyContacts
+        new EmergencyContact
         {
             ParentId = 0,
             Relation = string.Empty,
@@ -267,8 +267,8 @@
     };
 
     // 子供を追加
-    private List<Childrens> childModels = new List<Childrens>{  
-        new Childrens
+    private List<Children> childModels = new List<Children>{  
+        new Children
         {
             Rank = 1,
             ParentId = 0,
@@ -315,7 +315,7 @@
                 await DbContext.SaveChangesAsync();
 
                 Snackbar.Add("親情報と緊急連絡先が登録されました！", MudBlazor.Severity.Success);
-                parentModel = new Parents(); // フォームをリセット
+                parentModel = new Parent(); // フォームをリセット
                 emergencyModels.Clear(); // 緊急連絡先リストをリセット
                 childModels.Clear(); // 子供リストをリセット
                 Navigation.NavigateTo("/"); // ホームにリダイレクト
@@ -337,7 +337,7 @@
         try
         {
             var count = emergencyModels.Count;
-            emergencyModels.Add(new EmergencyContacts
+            emergencyModels.Add(new EmergencyContact
                 {
                     ParentId = parentModel.ParentId,
                     Relation = string.Empty,
@@ -358,7 +358,7 @@
 
     // 緊急連絡先を削除
 
-    private void DeleteEmergencyContact(EmergencyContacts contact)
+    private void DeleteEmergencyContact(EmergencyContact contact)
     {
         try
         {
@@ -380,7 +380,7 @@
         try
         {
             var count = childModels.Count;
-            childModels.Add(new Childrens
+            childModels.Add(new Children
                 {
                     Rank = count + 1,
                     ParentId = parentModel.ParentId,
@@ -401,7 +401,7 @@
     }
 
     // 子供を削除
-    private void DeleteChild(Childrens child)
+    private void DeleteChild(Children child)
     {
         try
         {
@@ -425,7 +425,7 @@
     IList<IBrowserFile> files = new List<IBrowserFile>();
     private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
 
-    private List<Routs> routeModels = new List<Routs>();
+    private List<Rout> routeModels = new List<Rout>();
 
     private async Task ClearAsync()
     {
@@ -467,7 +467,7 @@
             {
                 var newFileName = $"{parentModel.ParentId}_map_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(file.Name)}";
                 var blobClient = containerClient.GetBlobClient(newFileName);
-                routeModels.Add(new Routs
+                routeModels.Add(new Rout
                     {
                         ParentId = parentModel.ParentId,
                         PhotoLocation = newFileName,

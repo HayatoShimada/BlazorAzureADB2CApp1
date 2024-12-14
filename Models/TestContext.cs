@@ -6,32 +6,39 @@ namespace BlazorAzureADB2CApp1.Models;
 
 public partial class TestContext : DbContext
 {
+    public TestContext()
+    {
+    }
+
     public TestContext(DbContextOptions<TestContext> options)
         : base(options)
     {
     }
 
-    public virtual DbSet<Childrens> Childrens { get; set; }
+    public virtual DbSet<Children> Childrens { get; set; }
 
-    public virtual DbSet<Classes> Classes { get; set; }
+    public virtual DbSet<Class> Classes { get; set; }
 
-    public virtual DbSet<EmergencyContacts> EmergencyContacts { get; set; }
+    public virtual DbSet<EmergencyContact> EmergencyContacts { get; set; }
 
-    public virtual DbSet<LinkedAccounts> LinkedAccounts { get; set; }
+    public virtual DbSet<LinkedAccount> LinkedAccounts { get; set; }
 
-    public virtual DbSet<MessageTargets> MessageTargets { get; set; }
+    public virtual DbSet<Message> Messages { get; set; }
 
-    public virtual DbSet<Messages> Messages { get; set; }
+    public virtual DbSet<MessageTarget> MessageTargets { get; set; }
 
-    public virtual DbSet<Parents> Parents { get; set; }
+    public virtual DbSet<Parent> Parents { get; set; }
 
-    public virtual DbSet<Routs> Routs { get; set; }
+    public virtual DbSet<Rout> Routs { get; set; }
 
-    public virtual DbSet<Teachers> Teachers { get; set; }
+    public virtual DbSet<Teacher> Teachers { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer("Server=tcp:upload-system.database.windows.net,1433;Initial Catalog=test;Persist Security Info=False;User ID=CloudSA8e55278f;Password=Grantorino01;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Childrens>(entity =>
+        modelBuilder.Entity<Children>(entity =>
         {
             entity.HasKey(e => e.ChildId).HasName("PK__Children__BEFA0716E2B16518");
 
@@ -46,23 +53,30 @@ public partial class TestContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Parent).WithMany(p => p.Childrens)
+            entity.HasOne(d => d.Class).WithMany(p => p.Children)
+                .HasForeignKey(d => d.ClassId)
+                .HasConstraintName("FK_Childrens_Classes");
+
+            entity.HasOne(d => d.Parent).WithMany(p => p.Children)
                 .HasForeignKey(d => d.ParentId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__Childrens__Paren__00200768");
         });
 
-        modelBuilder.Entity<Classes>(entity =>
+        modelBuilder.Entity<Class>(entity =>
         {
-            entity.HasNoKey();
+            entity.HasKey(e => e.ClassesId);
 
-            entity.Property(e => e.ClassId)
-                .HasMaxLength(10)
-                .IsFixedLength();
+            entity.Property(e => e.ClassesId).ValueGeneratedNever();
             entity.Property(e => e.Name).HasMaxLength(50);
+
+            entity.HasOne(d => d.Teacher).WithMany(p => p.Classes)
+                .HasForeignKey(d => d.TeacherId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Classes_Teachers");
         });
 
-        modelBuilder.Entity<EmergencyContacts>(entity =>
+        modelBuilder.Entity<EmergencyContact>(entity =>
         {
             entity.HasKey(e => e.ContactId).HasName("PK__Emergenc__5C66259BE111DBA2");
 
@@ -82,7 +96,7 @@ public partial class TestContext : DbContext
                 .HasConstraintName("FK__Emergency__Paren__7B5B524B");
         });
 
-        modelBuilder.Entity<LinkedAccounts>(entity =>
+        modelBuilder.Entity<LinkedAccount>(entity =>
         {
             entity.HasKey(e => e.AccountId).HasName("PK__LinkedAc__349DA5A6FDA3EDB3");
 
@@ -100,23 +114,21 @@ public partial class TestContext : DbContext
                 .HasConstraintName("FK__LinkedAcc__Paren__75A278F5");
         });
 
-        modelBuilder.Entity<MessageTargets>(entity =>
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.Property(e => e.MessageId).ValueGeneratedNever();
+            entity.Property(e => e.Context).HasColumnType("text");
+            entity.Property(e => e.SenderType).HasMaxLength(10);
+        });
+
+        modelBuilder.Entity<MessageTarget>(entity =>
         {
             entity.HasNoKey();
 
             entity.Property(e => e.TargetType).HasMaxLength(10);
         });
 
-        modelBuilder.Entity<Messages>(entity =>
-        {
-            entity.HasKey(e => e.MessageId);
-
-            entity.Property(e => e.MessageId).ValueGeneratedNever();
-            entity.Property(e => e.Context).HasColumnType("text");
-            entity.Property(e => e.SenderType).HasMaxLength(10);
-        });
-
-        modelBuilder.Entity<Parents>(entity =>
+        modelBuilder.Entity<Parent>(entity =>
         {
             entity.HasKey(e => e.ParentId).HasName("PK__Parents__D339516FF4DABD57");
 
@@ -136,7 +148,7 @@ public partial class TestContext : DbContext
                 .HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<Routs>(entity =>
+        modelBuilder.Entity<Rout>(entity =>
         {
             entity.HasKey(e => e.RouteId).HasName("PK__Routs__80979B4DFB1786F4");
 
@@ -155,11 +167,11 @@ public partial class TestContext : DbContext
                 .HasConstraintName("FK__Routs__ParentId__04E4BC85");
         });
 
-        modelBuilder.Entity<Teachers>(entity =>
+        modelBuilder.Entity<Teacher>(entity =>
         {
-            entity.HasNoKey();
-
-            entity.Property(e => e.AccessId).HasColumnType("text");
+            entity.Property(e => e.TeacherId).ValueGeneratedNever();
+            entity.Property(e => e.AccessId).HasMaxLength(50);
+            entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.Name).HasMaxLength(50);
         });
 

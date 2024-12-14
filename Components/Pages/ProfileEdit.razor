@@ -223,9 +223,9 @@ else
 
 @code {
 
-    private Parents parentModel = new Parents();
-    private List<EmergencyContacts> emergencyModels = new List<EmergencyContacts>();
-    private List<Childrens> childModels = new List<Childrens>();
+    private Parent parentModel = new Parent();
+    private List<EmergencyContact> emergencyModels = new List<EmergencyContact>();
+    private List<Children> childModels = new List<Children>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -294,7 +294,7 @@ else
         try
         {
             var count = emergencyModels.Count;
-            emergencyModels.Add(new EmergencyContacts
+            emergencyModels.Add(new EmergencyContact
                 {
                     ParentId = parentModel.ParentId,
                     Relation = string.Empty,
@@ -315,7 +315,7 @@ else
 
     // 緊急連絡先を削除
 
-    private void DeleteEmergencyContact(EmergencyContacts contact)
+    private void DeleteEmergencyContact(EmergencyContact contact)
     {
         try
         {
@@ -336,7 +336,7 @@ else
         try
         {
             var count = childModels.Count;
-            childModels.Add(new Childrens
+            childModels.Add(new Children
                 {
                     Rank = count + 1,
                     ParentId = parentModel.ParentId,
@@ -357,7 +357,7 @@ else
     }
 
     // 子供を削除
-    private void DeleteChild(Childrens child)
+    private void DeleteChild(Children child)
     {
         try
         {
@@ -381,7 +381,7 @@ else
     private string _dragClass = DefaultDragClass;
     IList<IBrowserFile> files = new List<IBrowserFile>();
     private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
-    private List<Routs> routeModels = new List<Routs>();
+    private List<Rout> routeModels = new List<Rout>();
 
     private async Task ClearAsync()
     {

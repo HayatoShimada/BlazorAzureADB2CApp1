@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BlazorAzureADB2CApp1.Models;
 
-public partial class Messages
+public partial class Message
 {
     public long MessageId { get; set; }
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BlazorAzureADB2CApp1.Models;
 
-public partial class Routs
+public partial class Rout
 {
     public int RouteId { get; set; }
 
@@ -17,5 +17,5 @@ public partial class Routs
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Parents? Parent { get; set; }
+    public virtual Parent? Parent { get; set; }
 }

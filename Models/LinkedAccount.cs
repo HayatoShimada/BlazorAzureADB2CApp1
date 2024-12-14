@@ -17,5 +17,5 @@ public partial class LinkedAccount
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual Parents Parent { get; set; } = null!;
+    public virtual Parent Parent { get; set; } = null!;
 }

@@ -54,7 +54,7 @@
             ログイン済みです！ようこそ、@UserStateService.Username さん！
         </MudAlert>
         <MudStack Spacing="2">
-            @foreach (Childrens child in parent.Childrens)
+            @foreach (Children child in parent.Children)
             {
                 <MudText Typo="Typo.h6">お子様情報 @child.Rank</MudText>
                 <MudText Typo="Typo.body2">お名前: @child.Name</MudText>
@@ -73,7 +73,7 @@
 @code {
     private bool isRegister = true;
     private int parentId = 1;
-    private Parents parent = new Parents();
+    private Parent parent = new Parent();
 
     private void OnThemeChanged()
     {
@@ -91,7 +91,7 @@
         if(UserStateService.Email != null)
         {
             parent = await DbContext.Parents.FirstOrDefaultAsync(p => p.EmailAddress == UserStateService.Email) ?? new() ;
-            if(parent != null && parent.Childrens != null)
+            if(parent != null && parent.Children != null)
             {
                 parentId = parent.ParentId;
                 isRegister = true;
