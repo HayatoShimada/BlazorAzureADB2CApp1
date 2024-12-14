@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BlazorAzureADB2CApp1.Models;
 
-public partial class LinkedAccount
+public partial class LinkedAccounts
 {
     public int AccountId { get; set; }
 

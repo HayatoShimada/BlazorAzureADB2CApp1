@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BlazorAzureADB2CApp1.Models;
 
-public partial class Children
+public partial class Childrens
 {
     public int ChildId { get; set; }
 
@@ -23,5 +23,5 @@ public partial class Children
 
     public int? Rank { get; set; }
 
-    public virtual Parent? Parent { get; set; }
+    public virtual Parents? Parent { get; set; }
 }

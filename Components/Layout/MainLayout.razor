@@ -32,8 +32,21 @@
             <MudNavLink Href="/profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">
                 登録情報
             </MudNavLink>
+            <MudNavLink Href="/classeslist" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Class">
+                クラス一覧
+            </MudNavLink>
             <MudNavLink Href="/parentslist" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People">
-                登録情報一覧
+                親一覧
+            </MudNavLink>
+            <MudNavLink Href="/childrenlist" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ChildFriendly">
+                子供一覧
+            </MudNavLink>
+            <MudNavLink Href="/terms" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Rule">
+                利用規約
+            </MudNavLink>
+
+            <MudNavLink Href="/policy" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Policy">
+                プライバシーポリシー
             </MudNavLink>
             <MudSpacer />
             @if (!UserStateService.IsLoggedIn)
