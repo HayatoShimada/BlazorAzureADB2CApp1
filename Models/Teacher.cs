@@ -12,6 +12,4 @@ public partial class Teacher
     public string AccessId { get; set; } = null!;
 
     public string? Email { get; set; }
-
-    public virtual ICollection<Class> Classes { get; } = new List<Class>();
 }

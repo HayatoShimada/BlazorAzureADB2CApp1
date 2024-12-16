@@ -25,11 +25,20 @@
 
 <MudCard>
     <MudCardContent>
-        <MudTextField Label="クラス名" HelperText="最大8文字まで。"
-                      @bind-Value="inputClass.Name" For="@(() => inputClass.Name)" />
+        <MudTextField 
+            Label="クラス名" 
+            HelperText="最大8文字まで。"
+            @bind-Value="inputClass.Name"/>
     </MudCardContent>
     <MudCardActions>
-        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">登録</MudButton>
+        <MudButton 
+            ButtonType="ButtonType.Button" 
+            Variant="Variant.Filled" 
+            Color="Color.Primary" 
+            Class="ml-auto"
+            OnClick="AddClass">
+            登録
+        </MudButton>
     </MudCardActions>
 </MudCard>
 
@@ -46,14 +55,28 @@ else
               LoadingProgressColor="Color.Info">
 
         <HeaderContent>
-            <MudTh>ID</MudTh>
             <MudTh>名前</MudTh>
-            <MudTh></MudTh>
+            <MudTh>編集</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="ClassId">@context.ClassesId</MudTd>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Name">
+                <MudInput @bind-Value="context.Name" />
+
+                <MudButton 
+                           Color="Color.Primary"
+                           Class="ml-auto"
+                           OnClick="() => EditClass(context)">
+                    適用
+                </MudButton>
+                </MudTd>
             <MudTd>
+                <MudButton 
+                    Variant="Variant.Filled" 
+                    Color="Color.Secondary" 
+                    Class="ml-auto" 
+                    OnClick="() => DeleteClass(context)">
+                    削除
+                </MudButton>
             </MudTd>
         </RowTemplate>
 
@@ -61,7 +84,7 @@ else
 }
 
 @code {
-    private Class? inputClass = new();
+    private Class inputClass = new();
 
     private List<Class>? classes;
     private bool _loading = false;
@@ -69,7 +92,6 @@ else
     bool success;
     string[] errors = { };
     MudTextField<string> pwField1;
-    MudForm form;
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,4 +109,76 @@ else
             _loading = false;
         }
     }
+
+    private async Task AddClass()
+    {
+        try
+        {
+            // ClassesId を設定しない
+            var result = await DbContext.Classes.AddAsync(inputClass);
+            await DbContext.SaveChangesAsync();
+
+            // 追加したクラスをリストに追加
+            classes.Add(inputClass);
+
+            // 入力フィールドを初期化
+            inputClass = new();
+            Snackbar.Add($"クラスを追加しました。", MudBlazor.Severity.Success);
+            Navigation.Refresh();
+        }
+        catch (Exception ex)
+        {
+            // エラー詳細を Snackbar に表示
+            var innerMessage = ex.InnerException != null ? ex.InnerException.Message : "詳細なし";
+            Snackbar.Add($"エラー: {ex.Message} - {innerMessage}", MudBlazor.Severity.Error);
+            Console.WriteLine($"エラー詳細: {ex}");
+        }
+    }
+
+    private async Task DeleteClass(Class deleteClass)
+    {
+        try
+        {
+            // ClassesId を設定しない
+            DbContext.Classes.Remove(deleteClass);
+            await DbContext.SaveChangesAsync();
+
+            // 入力フィールドを初期化
+            Snackbar.Add($"クラスを削除しました。", MudBlazor.Severity.Success);
+            Navigation.Refresh();
+
+            classes = await DbContext.Classes.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            // エラー詳細を Snackbar に表示
+            var innerMessage = ex.InnerException != null ? ex.InnerException.Message : "詳細なし";
+            Snackbar.Add($"エラー: {ex.Message} - {innerMessage}", MudBlazor.Severity.Error);
+            Console.WriteLine($"エラー詳細: {ex}");
+        }
+    }
+
+    private async Task EditClass(Class editClass)
+    {
+        try
+        {
+            // ClassesId を設定しない
+            DbContext.Classes.Update(editClass);
+            await DbContext.SaveChangesAsync();
+
+            // 入力フィールドを初期化
+            Snackbar.Add($"クラスを削除しました。", MudBlazor.Severity.Success);
+            Navigation.Refresh();
+
+            classes = await DbContext.Classes.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            // エラー詳細を Snackbar に表示
+            var innerMessage = ex.InnerException != null ? ex.InnerException.Message : "詳細なし";
+            Snackbar.Add($"エラー: {ex.Message} - {innerMessage}", MudBlazor.Severity.Error);
+            Console.WriteLine($"エラー詳細: {ex}");
+        }
+    }
+
 }

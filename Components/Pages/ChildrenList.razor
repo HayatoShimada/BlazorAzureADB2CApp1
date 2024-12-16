@@ -23,7 +23,7 @@
 @inject IConfiguration Configuration
 @inject BlobStorageService BlobService
 
-@if (childrens == null)
+@if (childrens == null && classes == null)
 {
     <p>読み込み中</p>
 }
@@ -38,21 +38,37 @@ else
         <HeaderContent>
             <MudTh>ID</MudTh>
             <MudTh>名前</MudTh>
-            <MudTh></MudTh>
+            <MudTh>クラス</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="ChildrenId">@context.ChildId</MudTd>
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd>
+                <MudSelect T="int?" Value="context.ClassId">
+                    @foreach (var c in classes)
+                    {
+                        <MudSelectItem Value="@c.ClassesId">
+                            @c.Name
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudButton Color="Color.Primary"
+                           Class="ml-auto"
+                           OnClick="() => EditChildren(context)">
+                    適用
+                </MudButton>
             </MudTd>
         </RowTemplate>
 
     </MudTable>
+
 }
 
 @code {
 
-    private List<Children>? childrens;
+    private List<Class> classes = new();
+    private List<Children> childrens = new();
     private bool _loading = false;
 
     protected override async Task OnInitializedAsync()
@@ -61,6 +77,16 @@ else
         {
             _loading = true;
             childrens = await DbContext.Childrens.ToListAsync();
+            classes = await DbContext.Classes.ToListAsync();
+
+            // `ClassId` が null の場合に初期値を設定
+            foreach (var child in childrens)
+            {
+                if (child.ClassId == null && classes.Count > 0)
+                {
+                    child.ClassId = classes.First().ClassesId; // 最初のクラスをデフォルトに設定
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -71,4 +97,14 @@ else
             _loading = false;
         }
     }
+
+    private async Task EditChildren(Children c)
+    {
+        DbContext.Childrens.Update(c);
+        await DbContext.SaveChangesAsync();
+
+        childrens = await DbContext.Childrens.ToListAsync();
+
+    }
+
 }
