@@ -22,13 +22,13 @@
 @inject UserStateService UserStateService
 @inject IConfiguration Configuration
 @inject BlobStorageService BlobService
+@inject IDialogService DialogService
 
 
 <PageTitle>親情報一覧</PageTitle>
 <MudSnackbarProvider />
-<MudText Typo="Typo.h4" GutterBottom="true">親情報一覧</MudText>
+<MudText Typo="Typo.h5" GutterBottom="true">親情報一覧</MudText>
 
-<MudSwitch @bind-Value="canCancelEdit" Color="Color.Primary">編集モード</MudSwitch>
 
 @if (parents == null)
 {
@@ -71,6 +71,8 @@ else
                 OnClick="@(parent.ShowMap != true ? () => RoutePress(parent) : () => CloseDetail(parent) )">
                     @((parent.ShowMap == true) ? "通園経路" : "通園経路")
                 </MudButton>
+
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SendMessageDialog(parent))">送信</MudButton>
 
             </MudTd>
         </RowTemplate>
@@ -218,6 +220,29 @@ else
         _blobFiles = await BlobService.LoadFilesAsync(parent.ParentId);
         _isBlobLoading = false;
 
+    }
+
+    // メッセージ送信用
+    string _returnValue = String.Empty;
+    private readonly DialogOptions _maxWidth = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+
+    private async void SendMessageDialog(Parent parent)
+    {
+        var options = _maxWidth;
+        var dialogReference = await DialogService.ShowAsync<SendDialog>("メッセージ送信", options);
+        StateHasChanged();
+
+
+        var dialogResult = await dialogReference.Result;
+        if (dialogResult.Canceled)
+        {
+            StateHasChanged();
+        }
+        else
+        {
+            _returnValue = $"Dialog returned '{dialogResult.Data}'";
+            StateHasChanged();
+        }
     }
 
 

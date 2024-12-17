@@ -1,0 +1,44 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTextField 
+            T="string" 
+            Variant="Variant.Outlined" 
+            Label="メッセージを入力" 
+            Lines="5"
+            @bind-Value="_returnValue" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">キャンセル</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">送信</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!; // for MessageBox
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    private string _returnValue = String.Empty;
+
+    private async Task Submit ()
+    {
+        if (string.IsNullOrEmpty(_returnValue))
+        {
+            await DialogService.ShowMessageBox(
+                        "メッセージを入力してください",
+                        "",
+                        yesText: "OK",
+                        options: new DialogOptions() { CloseOnEscapeKey = true });
+            return;
+        }
+        else
+        {
+            MudDialog.Close(DialogResult.Ok(_returnValue));
+
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+}
