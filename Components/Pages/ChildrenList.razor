@@ -39,6 +39,7 @@ else
             <MudTh>ID</MudTh>
             <MudTh>名前</MudTh>
             <MudTh>クラス</MudTh>
+            <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="ChildrenId">@context.ChildId</MudTd>
@@ -52,7 +53,9 @@ else
                         </MudSelectItem>
                     }
                 </MudSelect>
+            </MudTd>
 
+            <MudTd>
                 <MudButton Color="Color.Primary"
                            Class="ml-auto"
                            OnClick="() => EditChildren(context)">
@@ -67,12 +70,14 @@ else
 
 @code {
 
-    private List<Class> classes = new();
-    private List<Children> childrens = new();
+    private List<Class>? classes = new();
+    private List<Children>? childrens = new();
     private bool _loading = false;
 
     protected override async Task OnInitializedAsync()
     {
+        childrens = null;
+        classes = null;
         try
         {
             _loading = true;

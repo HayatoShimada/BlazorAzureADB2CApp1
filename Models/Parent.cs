@@ -33,8 +33,7 @@ public partial class Parent
     public virtual ICollection<Rout> Routs { get; } = new List<Rout>();
 
     [NotMapped]
-    public bool? ShowDetail { get; set; }
-
+    public bool? ShowDetail { get; set; } = false;
     [NotMapped]
-    public bool? ShowMap { get; set; }
+    public bool? ShowMap { get; set; } = false;
 }

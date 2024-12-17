@@ -23,7 +23,9 @@
 @inject IConfiguration Configuration
 @inject BlobStorageService BlobService
 
-<MudCard>
+<MudText Typo="Typo.h5" Class="mb-2">クラス登録</MudText>
+
+<MudCard Class="mb-3">
     <MudCardContent>
         <MudTextField 
             Label="クラス名" 
@@ -48,6 +50,9 @@
 }
 else
 {
+    <MudText Typo="Typo.h5" Class="mb-2">クラス一覧</MudText>
+
+
     <MudTable Items="@classes"
               Hover="true"
               Breakpoint="Breakpoint.Sm"

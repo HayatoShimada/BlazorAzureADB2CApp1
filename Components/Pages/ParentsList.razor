@@ -37,15 +37,15 @@
 else
 {
     <MudTable Items="@parents"
-    Hover="true"
-    Breakpoint="Breakpoint.Sm"
-    Loading="@_loading"
-    LoadingProgressColor="Color.Info"
-    ReadOnly="@ronly"
-    CanCancelEdit="@canCancelEdit"
-    ApplyButtonPosition="@applyButtonPosition"
-    EditButtonPosition="@editButtonPosition"
-    EditTrigger="@editTrigger">
+        Hover="true"
+        Breakpoint="Breakpoint.Sm"
+        Loading="@_loading"
+        LoadingProgressColor="Color.Info"
+        ReadOnly="@ronly"
+        CanCancelEdit="@canCancelEdit"
+        ApplyButtonPosition="@applyButtonPosition"
+        EditButtonPosition="@editButtonPosition"
+        EditTrigger="@editTrigger">
 
         <HeaderContent>
             <MudTh>ID</MudTh>
@@ -62,23 +62,23 @@ else
             <MudTd>
                 <MudButton Variant="Variant.Outlined"
                 Size="Size.Small"
-                OnClick="@(() => ShowBtnPress(parent))">
-                    @((parent.ShowDetail == true) ? "閉じる" : "子供詳細")
+                OnClick="@(parent.ShowDetail != true ? () => ShowBtnPress(parent) : () => CloseDetail(parent))">
+                    @((parent.ShowDetail == true) ? "子供詳細" : "子供詳細")
                 </MudButton>
 
                 <MudButton Variant="Variant.Outlined"
                 Size="Size.Small"
-                OnClick="@(() => RoutePress(parent))">
-                    @((parent.ShowMap == true) ? "閉じる" : "通園経路")
+                OnClick="@(parent.ShowMap != true ? () => RoutePress(parent) : () => CloseDetail(parent) )">
+                    @((parent.ShowMap == true) ? "通園経路" : "通園経路")
                 </MudButton>
 
             </MudTd>
         </RowTemplate>
 
         <ChildRowContent Context="parent">
-            @if (parent.ShowDetail ?? false)
+            @if (parent.ShowDetail == true)
             {
-                <MudTr>
+                <MudTr >
                     <td colspan="5">
                         <MudTable Items="@parent.Children"
                             Hover="true"
@@ -89,7 +89,8 @@ else
                             CanCancelEdit="@canCancelEdit"
                             ApplyButtonPosition="@applyButtonPosition"
                             EditButtonPosition="@editButtonPosition"
-                            EditTrigger="@editTrigger">
+                            EditTrigger="@editTrigger"
+                            Style="filter: brightness(90%)">
 
                             <HeaderContent>
                                 <MudTh>ID</MudTh>
@@ -109,7 +110,7 @@ else
                     </td>
                 </MudTr>
             }
-            @if (parent.ShowMap ?? false)
+            @if (parent.ShowMap == true)
             {
                 <MudTr>
                     <td colspan="5">
@@ -117,13 +118,10 @@ else
                         {
                             @foreach (var file in _blobFiles)
                             {
-                                <MudStack Row="true" Spacing="2">
-                                    <MudImage Src="@file.Url" Width="100" Height="100" />
-                                    <MudLink Href="@file.Url" Target="_blank">ダウンロード</MudLink>
-                                </MudStack>
-                                <MudText>
-                                    <MudLink Href="@file.Url" Target="_blank">@file.Name</MudLink>
-                                </MudText>
+                                <div class="d-flex justify-center">
+                                    <MudImage ObjectFit="ObjectFit.Contain" Src="@file.Url" Width="400" Class="rounded-lg" />
+                                </div>
+
                             }
                         }
                         else if (_isBlobLoading)
@@ -154,30 +152,53 @@ else
 
 
     protected override async Task OnInitializedAsync()
-    {        
+    {
         // 親リストを子リストを含めて取得
-        parents = await DbContext.Parents
+        parents = null;
+
+        try
+        {
+            parents = await DbContext.Parents
             .Include(p => p.Children) // 子リストを同時にロード
             .ToListAsync();
+        }
+        catch(Exception ex)
+        {
+            Snackbar.Add($"データの読み込み中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
+        }
+
 
     }
 
     private void ShowBtnPress(Parent parent)
     {
-        // ShowDetails プロパティをトグル
-        parent.ShowDetail = !parent.ShowDetail;
+        if (parents != null)
+        {
+            parents.ForEach(item => item.ShowMap = false);
+            parents.ForEach(item => item.ShowDetail = false);
+            parent.ShowDetail = !parent.ShowDetail;
+            StateHasChanged();
+        }
 
-        // State を更新
-        StateHasChanged();
     }
 
     private async void RoutePress(Parent parent)
     {
-        // ShowDetails プロパティをトグル
-        parent.ShowMap = !parent.ShowMap;
-        await LoadFiles(parent);
-        // State を更新
-        StateHasChanged();
+        if (parents != null)
+        {
+            parents.ForEach(item => item.ShowMap = false);
+            parents.ForEach(item => item.ShowDetail = false);
+            parent.ShowMap = !parent.ShowMap;
+            await LoadFiles(parent);
+            StateHasChanged();
+        }
+    }
+
+    private void CloseDetail(Parent parent)
+    {
+        parent.ShowDetail = false;
+        parent.ShowMap = false;
+
     }
 
     private void LineMessage(Children child)
@@ -185,7 +206,6 @@ else
         // Line 送信処理
         Snackbar.Add("Line 送信処理", MudBlazor.Severity.Info);
     }
-
 
 
     // アップロードファイルの表示ロジック
