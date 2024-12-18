@@ -7,7 +7,7 @@ public partial class Class
 {
     public int? ClassesId { get; set; }
 
-    public int TeacherId { get; set; }
+    public int? TeacherId { get; set; }
 
     public string? Name { get; set; }
 

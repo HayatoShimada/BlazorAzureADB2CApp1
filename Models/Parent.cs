@@ -34,6 +34,8 @@ public partial class Parent
 
     [NotMapped]
     public bool? ShowDetail { get; set; } = false;
+
     [NotMapped]
     public bool? ShowMap { get; set; } = false;
+
 }

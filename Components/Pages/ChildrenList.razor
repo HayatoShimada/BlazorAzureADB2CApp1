@@ -76,8 +76,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        childrens = null;
-        classes = null;
         try
         {
             _loading = true;
@@ -87,7 +85,7 @@ else
             // `ClassId` が null の場合に初期値を設定
             foreach (var child in childrens)
             {
-                if (child.ClassId == null && classes.Count > 0)
+                if (child.ClassId == null && classes.Any())
                 {
                     child.ClassId = classes.First().ClassesId; // 最初のクラスをデフォルトに設定
                 }

@@ -14,4 +14,10 @@ public partial class Message
     public string? Context { get; set; }
 
     public DateTime? CreatedAt { get; set; }
+
+    public int? ThreadId { get; set; }
+
+    public virtual ICollection<MessageRead> MessageReads { get; } = new List<MessageRead>();
+
+    public virtual ICollection<MessageTarget> MessageTargets { get; } = new List<MessageTarget>();
 }

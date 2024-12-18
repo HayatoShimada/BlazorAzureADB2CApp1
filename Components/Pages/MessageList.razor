@@ -1,0 +1,70 @@
+﻿@page "/messagelist"
+
+@using BlazorAzureADB2CApp1.Models
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+@inject TestContext DbContext
+@inject UserStateService UserStateService
+
+@if (Threads == null || Threads.Count == 0)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudTable Items="Threads">
+        <HeaderContent>
+            <MudTh>Thread ID</MudTh>
+            <MudTh>Last Message</MudTh>
+            <MudTh>Participants</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.ThreadId</MudTd>
+            <MudTd>@context.LastMessage</MudTd>
+            <MudTd>
+                @foreach (var participant in context.Participants)
+                {
+                    <MudChip T="int">@participant</MudChip>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<ThreadViewModel> Threads = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+
+            Threads = await DbContext.Messages
+                .Include(m => m.MessageTargets)
+                .GroupBy<Message, int?>(m => m.ThreadId)
+                .Select(g => new ThreadViewModel
+                    {
+                        ThreadId = g.Key ?? 0,
+                        LastMessage = g.OrderByDescending(m => m.CreatedAt).FirstOrDefault().Context,
+                        Participants = g.SelectMany<Message, int>(m => m.MessageTargets.Select(mt => mt.TargetId)).Distinct().ToList(),
+                        Messages = g.ToList()
+                    })
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"データの取得中にエラーが発生しました: {ex.Message}", Severity.Error);
+        }
+    }
+
+    public class ThreadViewModel
+    {
+        public int ThreadId { get; set; }
+        public string? LastMessage { get; set; }
+        public List<int> Participants { get; set; } = new();
+        public List<Message> Messages { get; set; } = new();
+    }
+}

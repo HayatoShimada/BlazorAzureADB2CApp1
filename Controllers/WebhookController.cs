@@ -10,11 +10,11 @@ namespace WebApplication1.Util
 {
     public class Payload
     {
-        public string channel { get; set; }
-        public string username { get; set; }
-        public string text { get; set; }
-        public string icon_emoji { get; set; }
-        public string icon_url { get; set; }
+        public string? channel { get; set; }
+        public string? username { get; set; }
+        public string? text { get; set; }
+        public string? icon_emoji { get; set; }
+        public string? icon_url { get; set; }
     }
 
     public static class Slack
