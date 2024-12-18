@@ -23,22 +23,28 @@
 @inject IConfiguration Configuration
 @inject BlobStorageService BlobService
 
+<MudText Typo="Typo.h5" Class="mb-2">登録</MudText>
+
 <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
-    <MudCard>
-        <MudSelect @bind-Value="inputTeacher.AccessId">
-            @foreach (var parent in parents)
-            {
-                <MudSelectItem Value="parent.EmailAddress">@parent.Name</MudSelectItem>
-            }
-        </MudSelect>
+    <MudCard Class="mb-3">
+        <MudCardContent>
+            <MudSelect @bind-Value="inputTeacher.AccessId">
+                @foreach (var parent in parents)
+                {
+                    <MudSelectItem Value="parent.EmailAddress">@parent.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudCardContent>
 
         <MudCardActions>
-            <MudButton ButtonType="ButtonType.Button" Color="Color.Primary" Class="ml-auto" OnClick="OnValidSubmit">登録</MudButton>
+            <MudButton Variant="Variant.Outlined" ButtonType="ButtonType.Button" Color="Color.Primary" Class="ml-auto" OnClick="OnValidSubmit">登録</MudButton>
         </MudCardActions>
 
     </MudCard>
 
 </MudForm>
+
+<MudText Typo="Typo.h5" Class="mb-2">一覧</MudText>
 
 
 @if (teachers == null)
@@ -54,13 +60,33 @@ else
               LoadingProgressColor="Color.Info">
 
         <HeaderContent>
-            <MudTh>ID</MudTh>
+            <MudTh>アバター</MudTh>
             <MudTh>名前</MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="ChildrenId">@context.TeacherId</MudTd>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="アバター">
+                <MudMenu>
+                    <ActivatorContent>
+                        <MudAvatar>
+                            @if (context.AvatarLocation != null)
+                            {
+                                <MudImage Src="@context.AvatarLocation"></MudImage>
+                            }
+                            else
+                            {
+                                <MudIcon Icon="MudIcons.Person"></MudIcon>
+                            }
+                        </MudAvatar>
+                    </ActivatorContent>
+
+                    <ChildContent>
+                        <MudMenuItem OnClick="(() => UploadImageDialog(context))">画像のアップロード</MudMenuItem>
+                    </ChildContent>
+
+                </MudMenu>                
+            </MudTd>
+            <MudTd DataLabel="名前">@context.Name</MudTd>
             <MudTd>
             </MudTd>
         </RowTemplate>
@@ -121,5 +147,10 @@ else
             }
         }
         _loading = false;
+    }
+
+    private async Task UploadImageDialog(Teacher teacher)
+    {
+
     }
 }
