@@ -3,6 +3,7 @@
 @using BlazorAzureADB2CApp1.Models
 @using Microsoft.EntityFrameworkCore
 @using MudBlazor
+@using BlazorAzureADB2CApp1.Components.Shared
 
 @inject ISnackbar Snackbar
 @inject TestContext DbContext
@@ -14,7 +15,7 @@
 }
 else
 {
-    <MudTable Items="Threads">
+    <MudTable Items="Threads" Class ="mb-3">
         <HeaderContent>
             <MudTh>Thread ID</MudTh>
             <MudTh>Last Message</MudTh>
@@ -40,8 +41,6 @@ else
     {
         try
         {
-
-
             Threads = await DbContext.Messages
                 .Include(m => m.MessageTargets)
                 .GroupBy<Message, int?>(m => m.ThreadId)
