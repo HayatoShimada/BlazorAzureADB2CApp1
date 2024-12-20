@@ -141,6 +141,18 @@ public partial class TestContext : DbContext
                 .HasConstraintName("FK_MessageReads_Role_Ref");
         });
 
+        modelBuilder.Entity<MessageRead>(entity =>
+        {
+            entity.HasKey(e => e.MessageReadId).HasName("PK__MessageR__3F28D060B2EDCF98");
+
+            entity.Property(e => e.MessageReadId).ValueGeneratedNever();
+            entity.Property(e => e.UserType).HasMaxLength(10);
+
+            entity.HasOne(d => d.Message).WithMany(p => p.MessageReads)
+                .HasForeignKey(d => d.MessageId)
+                .HasConstraintName("FK__MessageRe__Messa__634EBE90");
+        });
+
         modelBuilder.Entity<MessageTarget>(entity =>
         {
             entity.HasKey(e => e.MessageTargetId).HasName("PK__MessageT__BD1CB5FBC6CB9BD3");

@@ -1,0 +1,115 @@
+﻿@page "/messagesend"
+
+@using BlazorAzureADB2CApp1.Models
+@using FluentValidation
+@inject ISnackbar Snackbar
+@inject TestContext DbContext
+
+<h3>メッセージの送信</h3>
+
+<MudForm>
+    <MudTextField Label="送信者ID" @bind-Value="SenderId" />
+    <MudTextField Label="送信者タイプ" @bind-Value="SenderType" />
+    <MudTextField Label="メッセージ内容" @bind-Value="Content" />
+
+    <h4>宛先リスト</h4>
+    @foreach (var target in Targets)
+    {
+        <MudTextField Label="宛先ID" @bind-Value="target.TargetId" />
+        <MudTextField Label="宛先タイプ" @bind-Value="target.TargetType" />
+    }
+
+    <MudButton OnClick="AddTarget">宛先を追加</MudButton>
+    <MudButton Color="Color.Primary" OnClick="SendMessage">送信</MudButton>
+</MudForm>
+
+@code {
+    private int SenderId { get; set; }
+    private string SenderType { get; set; } = string.Empty;
+    private string Content { get; set; } = string.Empty;
+
+    private List<MessageTarget> Targets = new();
+
+    private void AddTarget()
+    {
+        Targets.Add(new MessageTarget());
+    }
+
+    private async Task SendMessage()
+    {
+        var validator = new MessageValidator();
+        var validationResult = validator.Validate(new Message
+            {
+                SenderId = SenderId,
+                Context = Content
+            });
+
+        if (!validationResult.IsValid)
+        {
+            foreach (var error in validationResult.Errors)
+            {
+                Snackbar.Add(error.ErrorMessage, MudBlazor.Severity.Error);
+            }
+            return;
+        }
+
+        var targetValidator = new MessageTargetValidator();
+        foreach (var target in Targets)
+        {
+            var targetResult = targetValidator.Validate(target);
+            if (!targetResult.IsValid)
+            {
+                foreach (var error in targetResult.Errors)
+                {
+                    Snackbar.Add(error.ErrorMessage, MudBlazor.Severity.Error);
+                }
+                return;
+            }
+        }
+
+        await SendMessageAsync(SenderId, SenderType, Content, Targets);
+    }
+
+    private async Task SendMessageAsync(int senderId, string senderType, string content, List<MessageTarget> targets)
+    {
+        var newMessage = new Message
+            {
+                SenderId = senderId,
+                SenderType = senderType,
+                Context = content,
+                CreatedAt = DateTime.UtcNow
+            };
+
+        DbContext.Messages.Add(newMessage);
+        await DbContext.SaveChangesAsync();
+
+        foreach (var target in targets)
+        {
+            target.MessageId = newMessage.MessageId;
+        }
+
+        DbContext.MessageTargets.AddRange(targets);
+        await DbContext.SaveChangesAsync();
+
+        Snackbar.Add("メッセージが送信されました", MudBlazor.Severity.Success);
+    }
+
+    public class MessageValidator : AbstractValidator<Message>
+    {
+        public MessageValidator()
+        {
+            RuleFor(m => m.SenderId).GreaterThan(0).WithMessage("送信者IDは必須です");
+            RuleFor(m => m.Context).NotEmpty().WithMessage("メッセージ内容は必須です");
+        }
+    }
+
+    public class MessageTargetValidator : AbstractValidator<MessageTarget>
+    {
+        public MessageTargetValidator()
+        {
+            RuleFor(t => t.TargetId).GreaterThan(0).WithMessage("宛先IDは必須です");
+            RuleFor(t => t.TargetType).NotEmpty().WithMessage("宛先タイプは必須です");
+        }
+    }
+
+}

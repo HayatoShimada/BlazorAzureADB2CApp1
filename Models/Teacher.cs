@@ -11,6 +11,9 @@ public partial class Teacher
 
     public string AccessId { get; set; } = null!;
 
+    public string? AvatarLocation { get; set; } = null!;
+
+
     public string? Email { get; set; }
 
     public string? AvatarLocation { get; set; }
