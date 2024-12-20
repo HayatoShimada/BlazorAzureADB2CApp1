@@ -25,7 +25,7 @@
 
 @code {
     private int SenderId { get; set; }
-    private string SenderType { get; set; } = string.Empty;
+    private int SenderType { get; set; } = 0;
     private string Content { get; set; } = string.Empty;
 
     private List<MessageTarget> Targets = new();
@@ -70,7 +70,7 @@
         await SendMessageAsync(SenderId, SenderType, Content, Targets);
     }
 
-    private async Task SendMessageAsync(int senderId, string senderType, string content, List<MessageTarget> targets)
+    private async Task SendMessageAsync(int senderId, int senderType, string content, List<MessageTarget> targets)
     {
         var newMessage = new Message
             {

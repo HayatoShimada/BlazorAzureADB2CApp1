@@ -16,5 +16,4 @@ public partial class Teacher
 
     public string? Email { get; set; }
 
-    public string? AvatarLocation { get; set; }
 }
