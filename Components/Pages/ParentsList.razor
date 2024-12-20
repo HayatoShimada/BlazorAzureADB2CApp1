@@ -1,5 +1,4 @@
 ﻿@page "/parentslist"
-
 @using Azure.Storage.Sas
 @using BlazorAzureADB2CApp1.Models
 @using Microsoft.EntityFrameworkCore
@@ -8,7 +7,6 @@
 @using System.Security.Claims
 @using FluentValidation
 @using FluentValidation.Results
-@using MudBlazor
 @using Azure.Identity
 @using Azure.Storage
 @using Azure.Storage.Blobs
@@ -16,12 +14,12 @@
 @using Azure.Storage.Blobs.Specialized
 
 @inject NavigationManager Navigation
-@inject ISnackbar Snackbar
 @inject TestContext DbContext
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserStateService UserStateService
-@inject IConfiguration Configuration
 @inject BlobStorageService BlobService
+@inject ISnackbar Snackbar
+@inject IConfiguration Configuration
 @inject IDialogService DialogService
 
 
@@ -228,12 +226,32 @@ else
 
     private async void SendMessageDialog(Parent parent)
     {
-        var options = _maxWidth;
-        var dialogReference = await DialogService.ShowAsync<SendDialog>("メッセージ送信", options);
-        StateHasChanged();
+        int senderId = 0;
+        int senderType = 0;
+        int targetId = parent.ParentId;
+        int targetType = 1;
 
+        var options = _maxWidth;
+        var parameters = new DialogParameters
+    {
+        { "SenderId", senderId },
+        { "SenderType", senderType },
+        { "TargetId", targetId },
+        { "TargetType", targetType }
+    };
+
+        var dialogReference = await DialogService.ShowAsync<SendDialog>("メッセージ送信", parameters, options);
 
         var dialogResult = await dialogReference.Result;
+
+        if (dialogResult == null)
+        {
+            // dialogResult が null の場合の処理
+            Snackbar.Add("ダイアログが予期せず閉じられました。", MudBlazor.Severity.Warning);
+            StateHasChanged();
+            return;
+        }
+
         if (dialogResult.Canceled)
         {
             StateHasChanged();
@@ -244,6 +262,5 @@ else
             StateHasChanged();
         }
     }
-
 
 }

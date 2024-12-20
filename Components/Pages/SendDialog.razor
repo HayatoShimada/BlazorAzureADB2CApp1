@@ -16,6 +16,11 @@
     [Inject]
     private IDialogService DialogService { get; set; } = default!; // for MessageBox
 
+    [Parameter] public int SenderId { get; set; }
+    [Parameter] public int SenderType { get; set; }
+    [Parameter] public int TargetId { get; set; }
+    [Parameter] public int TargetType { get; set; }
+
     [CascadingParameter]
     private MudDialogInstance MudDialog { get; set; } = default!;
 

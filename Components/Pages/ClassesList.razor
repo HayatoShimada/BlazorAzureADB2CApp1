@@ -8,7 +8,6 @@
 @using System.Security.Claims
 @using FluentValidation
 @using FluentValidation.Results
-@using MudBlazor
 @using Azure.Identity
 @using Azure.Storage
 @using Azure.Storage.Blobs
@@ -91,12 +90,10 @@ else
 @code {
     private Class inputClass = new();
 
-    private List<Class>? classes;
+    private List<Class> classes = new List<Class>();
     private bool _loading = false;
 
-    bool success;
-    string[] errors = { };
-    MudTextField<string> pwField1;
+
 
     protected override async Task OnInitializedAsync()
     {

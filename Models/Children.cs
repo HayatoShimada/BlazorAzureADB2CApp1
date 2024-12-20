@@ -7,7 +7,7 @@ public partial class Children
 {
     public int ChildId { get; set; }
 
-    public int? ClassId { get; set; }
+    public int ClassId { get; set; }
 
     public int? ParentId { get; set; }
 

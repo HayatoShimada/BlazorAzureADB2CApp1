@@ -45,7 +45,7 @@ else
             <MudTd DataLabel="ChildrenId">@context.ChildId</MudTd>
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd>
-                <MudSelect T="int?" Value="context.ClassId">
+                <MudSelect T="int" Value="context.ClassId">
                     @foreach (var c in classes)
                     {
                         <MudSelectItem Value="@c.ClassesId">
@@ -70,14 +70,13 @@ else
 
 @code {
 
-    private List<Class>? classes = new();
+    private List<Class> classes = new List<Class>();
     private List<Children>? childrens = new();
     private bool _loading = false;
 
     protected override async Task OnInitializedAsync()
     {
         childrens = null;
-        classes = null;
         try
         {
             _loading = true;
@@ -87,7 +86,7 @@ else
             // `ClassId` が null の場合に初期値を設定
             foreach (var child in childrens)
             {
-                if (child.ClassId == null && classes.Count > 0)
+                if (classes.Count > 0)
                 {
                     child.ClassId = classes.First().ClassesId; // 最初のクラスをデフォルトに設定
                 }

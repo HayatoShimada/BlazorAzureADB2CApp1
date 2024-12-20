@@ -375,7 +375,6 @@ else
 
     // アップロードロジック
     private bool isUploading = false;
-    private bool isFileLoading = false;
     private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
     private readonly List<string> _fileNames = new();
     private string _dragClass = DefaultDragClass;
@@ -407,8 +406,11 @@ else
 
     private async Task UploadFiles()
     {
+        isUploading = true;
         await BlobService.UploadFilesAsync(parentModel.ParentId, files);
         await LoadFiles();
+        await ClearAsync();
+        isUploading = false;
     }
 
     private void SetDragClass()

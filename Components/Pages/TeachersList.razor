@@ -104,7 +104,7 @@ else
         if (form.IsValid && parents != null)
         {
             var parent = parents.Find(x => x.EmailAddress == inputTeacher.AccessId);
-            if (parent != null)
+            if (parent != null && parent.Name != null)
             {
                 inputTeacher.Name = parent.Name;
                 var existingTeacher = DbContext.Teachers

@@ -25,9 +25,15 @@ public partial class TestContext : DbContext
 
     public virtual DbSet<Message> Messages { get; set; }
 
+    public virtual DbSet<MessageRead> MessageReads { get; set; }
+
     public virtual DbSet<MessageTarget> MessageTargets { get; set; }
 
+    public virtual DbSet<MessageThread> MessageThreads { get; set; }
+
     public virtual DbSet<Parent> Parents { get; set; }
+
+    public virtual DbSet<RoleRef> RoleRefs { get; set; }
 
     public virtual DbSet<Rout> Routs { get; set; }
 
@@ -114,13 +120,47 @@ public partial class TestContext : DbContext
         {
             entity.Property(e => e.MessageId).ValueGeneratedNever();
             entity.Property(e => e.Context).HasColumnType("text");
-            entity.Property(e => e.SenderType).HasMaxLength(10);
+
+            entity.HasOne(d => d.SenderTypeNavigation).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.SenderType)
+                .HasConstraintName("FK_Messages_Role_Ref");
+        });
+
+        modelBuilder.Entity<MessageRead>(entity =>
+        {
+            entity.HasKey(e => e.MessageReadId).HasName("PK__MessageR__3F28D060B2EDCF98");
+
+            entity.Property(e => e.MessageReadId).ValueGeneratedNever();
+
+            entity.HasOne(d => d.Message).WithMany(p => p.MessageReads)
+                .HasForeignKey(d => d.MessageId)
+                .HasConstraintName("FK__MessageRe__Messa__634EBE90");
+
+            entity.HasOne(d => d.User).WithMany(p => p.MessageReads)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK_MessageReads_Role_Ref");
         });
 
         modelBuilder.Entity<MessageTarget>(entity =>
         {
-            entity.HasNoKey();
+            entity.HasKey(e => e.MessageTargetId).HasName("PK__MessageT__BD1CB5FBC6CB9BD3");
 
+            entity.Property(e => e.MessageTargetId).ValueGeneratedNever();
+            entity.Property(e => e.TargetType).HasMaxLength(10);
+
+            entity.HasOne(d => d.Message).WithMany(p => p.MessageTargets)
+                .HasForeignKey(d => d.MessageId)
+                .HasConstraintName("FK_MessageTargets_Messages");
+        });
+
+        modelBuilder.Entity<MessageThread>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("MessageThreads");
+
+            entity.Property(e => e.Context).HasColumnType("text");
+            entity.Property(e => e.SenderType).HasMaxLength(10);
             entity.Property(e => e.TargetType).HasMaxLength(10);
         });
 
@@ -142,6 +182,18 @@ public partial class TestContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<RoleRef>(entity =>
+        {
+            entity.ToTable("Role_Ref");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(20)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Rout>(entity =>
@@ -167,6 +219,7 @@ public partial class TestContext : DbContext
         {
             entity.Property(e => e.TeacherId).ValueGeneratedNever();
             entity.Property(e => e.AccessId).HasMaxLength(50);
+            entity.Property(e => e.AvatarLocation).HasMaxLength(255);
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.Name).HasMaxLength(50);
         });

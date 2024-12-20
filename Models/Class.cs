@@ -5,7 +5,7 @@ namespace BlazorAzureADB2CApp1.Models;
 
 public partial class Class
 {
-    public int? ClassesId { get; set; }
+    public int ClassesId { get; set; }
 
     public int TeacherId { get; set; }
 

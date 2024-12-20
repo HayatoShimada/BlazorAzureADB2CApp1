@@ -9,9 +9,17 @@ public partial class Message
 
     public int? SenderId { get; set; }
 
-    public string? SenderType { get; set; }
+    public int? SenderType { get; set; }
 
     public string? Context { get; set; }
 
     public DateTime? CreatedAt { get; set; }
+
+    public int? ThreadId { get; set; }
+
+    public virtual ICollection<MessageRead> MessageReads { get; } = new List<MessageRead>();
+
+    public virtual ICollection<MessageTarget> MessageTargets { get; } = new List<MessageTarget>();
+
+    public virtual RoleRef? SenderTypeNavigation { get; set; }
 }

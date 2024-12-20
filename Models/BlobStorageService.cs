@@ -28,7 +28,7 @@
             string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
             var credential = new StorageSharedKeyCredential(accountName, accountKey);
-            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint), credential);
+            BlobContainerClient containerClient = new(new Uri(containerEndPoint), credential);
 
             // データベースから PhotoLocation を取得
             var routes = await _dbContext.Routs
@@ -77,7 +77,7 @@
 
             string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
-            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
+            BlobContainerClient containerClient = new(new Uri(containerEndPoint),
                                                                           new ManagedIdentityCredential(clientId));
 
             var routeModels = new List<Rout>();
@@ -116,7 +116,7 @@
 
             string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
-            BlobContainerClient containerClient = new BlobContainerClient(new Uri(containerEndPoint),
+            BlobContainerClient containerClient = new(new Uri(containerEndPoint),
                                                                           new ManagedIdentityCredential(clientId));
 
             var blobClient = containerClient.GetBlobClient(file.Name);

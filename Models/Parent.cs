@@ -24,16 +24,17 @@ public partial class Parent
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual ICollection<Children> Children { get; } = new List<Children>();
+    public virtual ICollection<Children> Children { get; } = [];
 
-    public virtual ICollection<EmergencyContact> EmergencyContacts { get; } = new List<EmergencyContact>();
+    public virtual ICollection<EmergencyContact> EmergencyContacts { get; } = [];
 
-    public virtual ICollection<LinkedAccount> LinkedAccounts { get; } = new List<LinkedAccount>();
+    public virtual ICollection<LinkedAccount> LinkedAccounts { get; } = [];
 
-    public virtual ICollection<Rout> Routs { get; } = new List<Rout>();
+    public virtual ICollection<Rout> Routs { get; } = [];
 
     [NotMapped]
     public bool? ShowDetail { get; set; } = false;
     [NotMapped]
     public bool? ShowMap { get; set; } = false;
+
 }
