@@ -71,7 +71,11 @@ else
                     @((parent.ShowMap == true) ? "通園経路" : "通園経路")
                 </MudButton>
 
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SendMessageDialog(parent))">送信</MudButton>
+                <MudButton Variant="Variant.Outlined" 
+                    Size="Size.Small" 
+                    OnClick="@(() => SendMessageDialog(parent))">
+                    送信
+                </MudButton>
 
             </MudTd>
         </RowTemplate>

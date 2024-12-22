@@ -7,6 +7,8 @@
     using Microsoft.EntityFrameworkCore;
     using Azure.Identity;
     using Microsoft.AspNetCore.Components.Forms;
+    using MudBlazor;
+    using BlazorAzureADB2CApp1.Components;
 
     public class BlobStorageService
     {
@@ -19,6 +21,7 @@
             _dbContext = dbContext;
         }
 
+        // ファイルの一覧を取得
         public async Task<List<BlobFileInfo>> LoadFilesAsync(int parentId)
         {
             var accountName = _configuration["AzureStorageConfig:AccountName"];
@@ -65,8 +68,52 @@
                     });
                 }
             }
-
             return files;
+        }
+
+        // Avatarのダウンロード
+        public async Task<BlobFileInfo> LoadAvatarAsync(string filePath)
+        {
+            var accountName = _configuration["AzureStorageConfig:AccountName"];
+            var containerName = _configuration["AzureStorageConfig:ContainerName"];
+            var accountKey = _configuration["AzureStorageConfig:AccountKey"];
+
+            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
+
+            var credential = new StorageSharedKeyCredential(accountName, accountKey);
+            BlobContainerClient containerClient = new(new Uri(containerEndPoint), credential);
+
+
+            // BLOB のリストを取得
+            var file = new BlobFileInfo();
+
+
+            await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
+            {
+                if (filePath.Contains(blobItem.Name))
+                {
+                    var blobClient = containerClient.GetBlobClient(blobItem.Name);
+
+                    // SAS トークンの生成
+                    var sasBuilder = new BlobSasBuilder
+                    {
+                        BlobContainerName = containerName,
+                        BlobName = blobItem.Name,
+                        Resource = "b",
+                        ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
+                    };
+                    sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+                    var sasToken = sasBuilder.ToSasQueryParameters(credential);
+                    var sasUri = new Uri($"{blobClient.Uri}?{sasToken}");
+
+                    file.Name = blobItem.Name;
+                    file.Url = sasUri.ToString();
+
+                    return file;
+                }
+            }
+            return file;
         }
 
         public async Task UploadFilesAsync(int parentId, IList<IBrowserFile> files)
@@ -102,6 +149,37 @@
             await _dbContext.SaveChangesAsync();
         }
 
+        // Avatar のアップロード
+        public async Task<bool> UploadAvatarAsync(string fileName, IBrowserFile file)
+        {
+            try
+            {
+                var accountName = _configuration["AzureStorageConfig:AccountName"];
+                var containerName = _configuration["AzureStorageConfig:ContainerName"];
+                var clientId = _configuration["AzureStorageConfig:ClientId"];
+
+                string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
+
+                BlobContainerClient containerClient = new(new Uri(containerEndPoint),
+                                                                            new ManagedIdentityCredential(clientId));
+
+                var blobClient = containerClient.GetBlobClient(fileName);
+                using var stream = file.OpenReadStream();
+                await blobClient.UploadAsync(stream, overwrite: true);
+
+                // アップロード成功
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // エラーログを記録（必要に応じてログ機能を追加）
+                Console.WriteLine($"Avatar upload failed: {ex.Message}");
+
+                // アップロード失敗
+                return false;
+            }
+        }
+
         // BlobStorageService のメソッド
         public async Task DeleteFileAsync(BlobFileInfo file, int parentId)
         {
@@ -132,7 +210,6 @@
                 await _dbContext.SaveChangesAsync();
             }
         }
-
     }
 
     public class BlobFileInfo

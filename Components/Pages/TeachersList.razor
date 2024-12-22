@@ -14,6 +14,7 @@
 @using Azure.Storage.Blobs
 @using Azure.Storage.Blobs.Models
 @using Azure.Storage.Blobs.Specialized
+@using BlazorAzureADB2CApp1.Components.Shared
 
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
@@ -22,6 +23,8 @@
 @inject UserStateService UserStateService
 @inject IConfiguration Configuration
 @inject BlobStorageService BlobService
+@inject IDialogService DialogService
+
 
 <MudText Typo="Typo.h5" Class="mb-2">登録</MudText>
 
@@ -149,8 +152,40 @@ else
         _loading = false;
     }
 
+
+    // メッセージ送信用
+    string _returnValue = String.Empty;
+    private readonly DialogOptions _maxWidth = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+
     private async Task UploadImageDialog(Teacher teacher)
     {
+        
+        var options = _maxWidth;
+        var parameters = new DialogParameters
+        {
+            { nameof(teacher), teacher }
+        };
 
+        var dialogReference = await DialogService.ShowAsync<UploadDialog>("メッセージ送信", parameters, options);
+
+        var dialogResult = await dialogReference.Result;
+
+        if (dialogResult == null)
+        {
+            // dialogResult が null の場合の処理
+            Snackbar.Add("ダイアログが予期せず閉じられました。", MudBlazor.Severity.Warning);
+            StateHasChanged();
+            return;
+        }
+
+        if (dialogResult.Canceled)
+        {
+            StateHasChanged();
+        }
+        else
+        {
+            _returnValue = $"Dialog returned '{dialogResult.Data}'";
+            StateHasChanged();
+        }
     }
 }

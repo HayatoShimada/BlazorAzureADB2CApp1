@@ -1,0 +1,158 @@
+﻿@using BlazorAzureADB2CApp1.Models
+@using Microsoft.EntityFrameworkCore
+@using System.Text.RegularExpressions
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using FluentValidation
+@using FluentValidation.Results
+@using MudBlazor
+@using Azure.Identity
+@using Azure.Storage
+@using Azure.Storage.Blobs
+@using Azure.Storage.Blobs.Models
+@using Azure.Storage.Blobs.Specialized
+@using Azure.Storage.Sas
+
+@inject ISnackbar Snackbar
+@inject BlobStorageService BlobService
+
+<MudItem xs="12">
+    <MudFileUpload 
+        T="IBrowserFile"
+        @ref="@_fileUpload"
+        OnFilesChanged="OnInputFileChanged"
+        AppendMultipleFiles
+        Hidden="@false"
+        InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+        InputStyle="opacity:0"
+        tabindex="-1"
+        @ondrop="@ClearDragClass"
+        @ondragenter="@SetDragClass"
+        @ondragleave="@ClearDragClass"
+        @ondragend="@ClearDragClass">
+
+        <ActivatorContent>
+            <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
+                <MudText Typo="Typo.h6">
+                    Drag and drop files here or click
+                </MudText>
+                <MudChip T="string" Color="Color.Dark" Text="@_fileName" tabindex="-1" />
+            </MudPaper>
+        </ActivatorContent>
+    </MudFileUpload>
+    <MudToolBar Gutters="false" Class="relative d-flex justify-end gap-4">
+        <MudButton Color="Color.Primary" OnClick="OpenFilePickerAsync" Variant="Variant.Filled">
+            Open file picker
+        </MudButton>
+        <MudButton Color="Color.Primary" Disabled="@(_fileName == string.Empty)" OnClick="UploadAvatar" Variant="Variant.Filled">
+            Upload
+        </MudButton>
+        <MudButton Color="Color.Error" Disabled="@(_fileName == string.Empty)" OnClick="ClearAsync" Variant="Variant.Filled">
+            Clear
+        </MudButton>
+    </MudToolBar>
+</MudItem>
+<MudItem>
+    @if (_fileUpload?.ValidationErrors.Any() ?? false)
+    {
+        <MudText Color="Color.Error" Typo="@Typo.caption">
+            @_fileUpload?.ValidationErrors[0]
+        </MudText>
+    }
+</MudItem>
+
+@code {
+    [Inject]
+    private IDialogService DialogService { get; set; } = default!;
+    [Inject]
+    private IConfiguration Configuration { get; set; } = default!;
+    [Inject]
+    private TestContext DbContext { get; set; } = default!;
+
+    [Parameter]
+    public Teacher teacher { get; set; } = new Teacher();
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+
+    private bool isUploading = false;
+    private string _returnValue = string.Empty;
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private string _fileName = string.Empty;
+    private string _dragClass = DefaultDragClass;
+    private IBrowserFile? file = null;
+
+    private MudFileUpload<IBrowserFile>? _fileUpload;
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
+
+    private async Task ClearAsync()
+    {
+        await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
+        _fileName = string.Empty;
+        file = default;
+        ClearDragClass();
+    }
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        var browserFiles = e.GetMultipleFiles();
+        _fileName = browserFiles.FirstOrDefault()?.Name ?? string.Empty;
+        file = browserFiles.FirstOrDefault();
+    }
+
+    // アバターのアップロード
+    private async Task UploadAvatar()
+    {
+        if (file == null)
+        {
+            Snackbar.Add("ファイルが選択されていません。", MudBlazor.Severity.Warning);
+        }
+        else
+        {
+            string fileName = $"{teacher.Name}_avatar_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(file.Name)}";
+            isUploading = true;
+
+            // アップロード処理
+            bool isSuccessful = await BlobService.UploadAvatarAsync(fileName, file);
+
+            if (isSuccessful)
+            {
+                await LoadFiles();
+                await ClearAsync();
+
+                teacher.AvatarLocation = fileName;
+                DbContext.Teachers.Update(teacher);
+                await DbContext.SaveChangesAsync();
+                Snackbar.Add("ファイルがアップロードされました！", MudBlazor.Severity.Success);
+            }
+            isUploading = false;
+        }
+    }
+
+
+    // アバターの表示ロジック
+    private bool _isBlobLoading = false;
+    private BlobFileInfo _avatarFile = new();
+
+
+    private async Task LoadFiles()
+    {
+        _isBlobLoading = true;
+        _avatarFile = await BlobService.LoadAvatarAsync(teacher.AvatarLocation);
+        _isBlobLoading = false;
+
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
+
