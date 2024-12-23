@@ -154,11 +154,28 @@
         private bool _isUploading = false;
         public async Task<bool> UploadAvatarAsync(string fileName, IBrowserFile file)
         {
+            if (string.IsNullOrEmpty(fileName))
+            {
+                Console.WriteLine("File name is null or empty.");
+                return false;
+            }
+
+            if (file == null)
+            {
+                Console.WriteLine("File is null.");
+                return false;
+            }
+
             try
             {
                 var accountName = _configuration["AzureStorageConfig:AccountName"];
                 var containerName = _configuration["AzureStorageConfig:ContainerName"];
                 var clientId = _configuration["AzureStorageConfig:ClientId"];
+
+                if (string.IsNullOrEmpty(accountName) || string.IsNullOrEmpty(containerName) || string.IsNullOrEmpty(clientId))
+                {
+                    throw new InvalidOperationException("Azure Storage configuration is incomplete.");
+                }
 
                 string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
 
