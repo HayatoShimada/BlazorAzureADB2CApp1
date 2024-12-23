@@ -150,6 +150,8 @@
         }
 
         // Avatar のアップロード
+
+        private bool _isUploading = false;
         public async Task<bool> UploadAvatarAsync(string fileName, IBrowserFile file)
         {
             try
@@ -164,7 +166,8 @@
                                                                             new ManagedIdentityCredential(clientId));
 
                 var blobClient = containerClient.GetBlobClient(fileName);
-                using var stream = file.OpenReadStream();
+                using var stream = file.OpenReadStream(maxAllowedSize: 1048576);
+
                 await blobClient.UploadAsync(stream, overwrite: true);
 
                 // アップロード成功

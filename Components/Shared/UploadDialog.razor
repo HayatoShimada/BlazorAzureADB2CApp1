@@ -50,6 +50,10 @@
         <MudButton Color="Color.Error" Disabled="@(_fileName == string.Empty)" OnClick="ClearAsync" Variant="Variant.Filled">
             Clear
         </MudButton>
+        @if (isUploading)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        }
     </MudToolBar>
 </MudItem>
 <MudItem>
