@@ -15,7 +15,5 @@ public partial class MessageRead
 
     public DateTime? ReadAt { get; set; }
 
-    public virtual Message? Message { get; set; }
-
     public virtual RoleRef? User { get; set; }
 }

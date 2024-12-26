@@ -4,39 +4,73 @@
 @using FluentValidation
 @inject ISnackbar Snackbar
 @inject TestContext DbContext
+@inject UserStateService UserStateService
 
 <h3>メッセージの送信</h3>
 
 <MudForm>
-    <MudTextField Label="送信者ID" @bind-Value="SenderId" />
-    <MudTextField Label="送信者タイプ" @bind-Value="SenderType" />
-    <MudTextField Label="メッセージ内容" @bind-Value="Content" />
-
-    <h4>宛先リスト</h4>
-    @foreach (var target in Targets)
+    @if (_loading)
     {
-        <MudTextField Label="宛先ID" @bind-Value="target.TargetId" />
-        <MudTextField Label="宛先タイプ" @bind-Value="target.TargetType" />
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     }
-
-    <MudButton OnClick="AddTarget">宛先を追加</MudButton>
+    else
+    {
+        <MudSelect T="int" @bind-Value="selectedParentId">
+            @foreach (var parent in parents)
+            {
+                <MudSelectItem Value="parent.ParentId">@parent.Name</MudSelectItem>
+            }
+        </MudSelect>
+    }
+    
+    <p>@selectedParentId</p>
+    <MudTextField Label="メッセージ内容" @bind-Value="Content" />
     <MudButton Color="Color.Primary" OnClick="SendMessage">送信</MudButton>
 </MudForm>
 
 @code {
     private int SenderId { get; set; }
-    private int SenderType { get; set; } = 0;
+    private int? SenderType { get; set; }
     private string Content { get; set; } = string.Empty;
+    private bool _loading = false;
+    private int selectedParentId = 0;
 
-    private List<MessageTarget> Targets = new();
+    private Teacher senderTeacher = new Teacher();
 
-    private void AddTarget()
+    private MessageTarget target = new MessageTarget();
+    private List<Parent> parents = new List<Parent>();
+
+    protected override async Task OnInitializedAsync()
     {
-        Targets.Add(new MessageTarget());
+        try
+        {
+            _loading = true;
+            parents = await DbContext.Parents.ToListAsync();
+
+            senderTeacher = await DbContext.Teachers
+                            .Where(t => t.Email == UserStateService.Email)
+                            .FirstAsync();
+
+            SenderId = senderTeacher.TeacherId;
+            SenderType = senderTeacher.Role != null ? senderTeacher.Role : 3;
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"データの読み込み中にエラーが発生しました: {ex.Message}", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
+
+    private bool _isSending = false;
 
     private async Task SendMessage()
     {
+        _isSending = true;
+
         var validator = new MessageValidator();
         var validationResult = validator.Validate(new Message
             {
@@ -54,23 +88,24 @@
         }
 
         var targetValidator = new MessageTargetValidator();
-        foreach (var target in Targets)
+
+        target.TargetId = selectedParentId;
+        target.TargetType = 4;
+
+        var targetResult = targetValidator.Validate(target);
+        if (!targetResult.IsValid)
         {
-            var targetResult = targetValidator.Validate(target);
-            if (!targetResult.IsValid)
+            foreach (var error in targetResult.Errors)
             {
-                foreach (var error in targetResult.Errors)
-                {
-                    Snackbar.Add(error.ErrorMessage, MudBlazor.Severity.Error);
-                }
-                return;
+                Snackbar.Add(error.ErrorMessage, MudBlazor.Severity.Error);
             }
+            return;
         }
 
-        await SendMessageAsync(SenderId, SenderType, Content, Targets);
+        await SendMessageAsync(SenderId, SenderType, Content, target);
     }
 
-    private async Task SendMessageAsync(int senderId, int senderType, string content, List<MessageTarget> targets)
+    private async Task SendMessageAsync(int senderId, int? senderType, string content, MessageTarget targets)
     {
         var newMessage = new Message
             {
@@ -83,12 +118,8 @@
         DbContext.Messages.Add(newMessage);
         await DbContext.SaveChangesAsync();
 
-        foreach (var target in targets)
-        {
-            target.MessageId = newMessage.MessageId;
-        }
-
-        DbContext.MessageTargets.AddRange(targets);
+        
+        DbContext.MessageTargets.Add(targets);
         await DbContext.SaveChangesAsync();
 
         Snackbar.Add("メッセージが送信されました", MudBlazor.Severity.Success);

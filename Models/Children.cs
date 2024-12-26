@@ -9,7 +9,7 @@ public partial class Children
 
     public int ClassId { get; set; }
 
-    public int? ParentId { get; set; }
+    public int ParentId { get; set; }
 
     public string? Name { get; set; }
 
@@ -25,7 +25,7 @@ public partial class Children
 
     public int? Rank { get; set; }
 
-    public virtual Class? Class { get; set; }
+    public virtual Class Class { get; set; } = null!;
 
-    public virtual Parent? Parent { get; set; }
+    public virtual Parent Parent { get; set; } = null!;
 }

@@ -150,55 +150,45 @@
         }
 
         // Avatar のアップロード
-
         private bool _isUploading = false;
         public async Task<bool> UploadAvatarAsync(string fileName, IBrowserFile file)
         {
-            if (string.IsNullOrEmpty(fileName))
+            if (string.IsNullOrEmpty(fileName) || file == null)
             {
-                Console.WriteLine("File name is null or empty.");
-                return false;
-            }
-
-            if (file == null)
-            {
-                Console.WriteLine("File is null.");
+                Console.WriteLine("File name or file is null or empty.");
                 return false;
             }
 
             try
             {
-                var accountName = _configuration["AzureStorageConfig:AccountName"];
-                var containerName = _configuration["AzureStorageConfig:ContainerName"];
-                var clientId = _configuration["AzureStorageConfig:ClientId"];
-
-                if (string.IsNullOrEmpty(accountName) || string.IsNullOrEmpty(containerName) || string.IsNullOrEmpty(clientId))
-                {
-                    throw new InvalidOperationException("Azure Storage configuration is incomplete.");
-                }
-
-                string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
-
-                BlobContainerClient containerClient = new(new Uri(containerEndPoint),
-                                                                            new ManagedIdentityCredential(clientId));
-
-                var blobClient = containerClient.GetBlobClient(fileName);
-                using var stream = file.OpenReadStream(maxAllowedSize: 1048576);
-
+                var blobClient = GetBlobClient(fileName);
+                using var stream = file.OpenReadStream(maxAllowedSize: 5242880);
                 await blobClient.UploadAsync(stream, overwrite: true);
-
-                // アップロード成功
                 return true;
             }
             catch (Exception ex)
             {
-                // エラーログを記録（必要に応じてログ機能を追加）
                 Console.WriteLine($"Avatar upload failed: {ex.Message}");
-
-                // アップロード失敗
                 return false;
             }
         }
+
+        private BlobClient GetBlobClient(string fileName)
+        {
+            var accountName = _configuration["AzureStorageConfig:AccountName"];
+            var containerName = _configuration["AzureStorageConfig:ContainerName"];
+            var clientId = _configuration["AzureStorageConfig:ClientId"];
+
+            if (string.IsNullOrEmpty(accountName) || string.IsNullOrEmpty(containerName) || string.IsNullOrEmpty(clientId))
+            {
+                throw new InvalidOperationException("Azure Storage configuration is incomplete.");
+            }
+
+            string containerEndPoint = string.Format("https://{0}.blob.core.windows.net/{1}", accountName, containerName);
+            BlobContainerClient containerClient = new(new Uri(containerEndPoint), new ManagedIdentityCredential(clientId));
+            return containerClient.GetBlobClient(fileName);
+        }
+
 
         // BlobStorageService のメソッド
         public async Task DeleteFileAsync(BlobFileInfo file, int parentId)

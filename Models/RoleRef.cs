@@ -11,5 +11,9 @@ public partial class RoleRef
 
     public virtual ICollection<MessageRead> MessageReads { get; } = new List<MessageRead>();
 
+    public virtual ICollection<MessageTarget> MessageTargets { get; } = new List<MessageTarget>();
+
     public virtual ICollection<Message> Messages { get; } = new List<Message>();
+
+    public virtual ICollection<Teacher> Teachers { get; } = new List<Teacher>();
 }

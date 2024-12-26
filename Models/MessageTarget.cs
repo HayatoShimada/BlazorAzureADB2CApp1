@@ -11,7 +11,9 @@ public partial class MessageTarget
 
     public int TargetId { get; set; }
 
-    public string TargetType { get; set; } = null!;
+    public int TargetType { get; set; }
 
     public virtual Message Message { get; set; } = null!;
+
+    public virtual RoleRef TargetTypeNavigation { get; set; } = null!;
 }

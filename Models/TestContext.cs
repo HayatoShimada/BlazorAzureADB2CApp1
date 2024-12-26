@@ -40,6 +40,7 @@ public partial class TestContext : DbContext
     public virtual DbSet<Teacher> Teachers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=tcp:upload-system.database.windows.net,1433;Initial Catalog=test;Persist Security Info=False;User ID=CloudSA8e55278f;Password=Grantorino01;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -61,11 +62,11 @@ public partial class TestContext : DbContext
 
             entity.HasOne(d => d.Class).WithMany(p => p.Children)
                 .HasForeignKey(d => d.ClassId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Childrens_Classes");
 
             entity.HasOne(d => d.Parent).WithMany(p => p.Children)
                 .HasForeignKey(d => d.ParentId)
-                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__Childrens__Paren__00200768");
         });
 
@@ -120,6 +121,7 @@ public partial class TestContext : DbContext
         {
             entity.Property(e => e.MessageId).ValueGeneratedNever();
             entity.Property(e => e.Context).HasColumnType("text");
+            entity.Property(e => e.TempMessageId).ValueGeneratedOnAdd();
 
             entity.HasOne(d => d.SenderTypeNavigation).WithMany(p => p.Messages)
                 .HasForeignKey(d => d.SenderType)
@@ -132,25 +134,9 @@ public partial class TestContext : DbContext
 
             entity.Property(e => e.MessageReadId).ValueGeneratedNever();
 
-            entity.HasOne(d => d.Message).WithMany(p => p.MessageReads)
-                .HasForeignKey(d => d.MessageId)
-                .HasConstraintName("FK__MessageRe__Messa__634EBE90");
-
             entity.HasOne(d => d.User).WithMany(p => p.MessageReads)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_MessageReads_Role_Ref");
-        });
-
-        modelBuilder.Entity<MessageRead>(entity =>
-        {
-            entity.HasKey(e => e.MessageReadId).HasName("PK__MessageR__3F28D060B2EDCF98");
-
-            entity.Property(e => e.MessageReadId).ValueGeneratedNever();
-            entity.Property(e => e.UserType).HasMaxLength(10);
-
-            entity.HasOne(d => d.Message).WithMany(p => p.MessageReads)
-                .HasForeignKey(d => d.MessageId)
-                .HasConstraintName("FK__MessageRe__Messa__634EBE90");
         });
 
         modelBuilder.Entity<MessageTarget>(entity =>
@@ -158,11 +144,16 @@ public partial class TestContext : DbContext
             entity.HasKey(e => e.MessageTargetId).HasName("PK__MessageT__BD1CB5FBC6CB9BD3");
 
             entity.Property(e => e.MessageTargetId).ValueGeneratedNever();
-            entity.Property(e => e.TargetType).HasMaxLength(10);
 
             entity.HasOne(d => d.Message).WithMany(p => p.MessageTargets)
                 .HasForeignKey(d => d.MessageId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_MessageTargets_Messages");
+
+            entity.HasOne(d => d.TargetTypeNavigation).WithMany(p => p.MessageTargets)
+                .HasForeignKey(d => d.TargetType)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_MessageTargets_Role_Ref");
         });
 
         modelBuilder.Entity<MessageThread>(entity =>
@@ -229,11 +220,16 @@ public partial class TestContext : DbContext
 
         modelBuilder.Entity<Teacher>(entity =>
         {
-            entity.Property(e => e.TeacherId).ValueGeneratedNever();
+            entity.HasKey(e => e.TeacherId).HasName("PK__Teachers__EDF25964FA2BEEFE");
+
             entity.Property(e => e.AccessId).HasMaxLength(50);
             entity.Property(e => e.AvatarLocation).HasMaxLength(255);
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.Name).HasMaxLength(50);
+
+            entity.HasOne(d => d.RoleNavigation).WithMany(p => p.Teachers)
+                .HasForeignKey(d => d.Role)
+                .HasConstraintName("FK_Teachers_Role_Ref");
         });
 
         OnModelCreatingPartial(modelBuilder);

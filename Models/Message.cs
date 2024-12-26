@@ -17,7 +17,7 @@ public partial class Message
 
     public int? ThreadId { get; set; }
 
-    public virtual ICollection<MessageRead> MessageReads { get; } = new List<MessageRead>();
+    public int TempMessageId { get; set; }
 
     public virtual ICollection<MessageTarget> MessageTargets { get; } = new List<MessageTarget>();
 

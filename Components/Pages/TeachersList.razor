@@ -65,7 +65,8 @@ else
         <HeaderContent>
             <MudTh>アバター</MudTh>
             <MudTh>名前</MudTh>
-            <MudTh></MudTh>
+            <MudTh>メールアドレス</MudTh>
+            <MudTh>役割</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="アバター">
@@ -90,8 +91,9 @@ else
                 </MudMenu>                
             </MudTd>
             <MudTd DataLabel="名前">@context.Name</MudTd>
-            <MudTd>
-            </MudTd>
+            <MudTd>@context.Email</MudTd>
+
+            <MudTd>@context.RoleNavigation.Name</MudTd>
         </RowTemplate>
 
     </MudTable>
@@ -101,7 +103,6 @@ else
 
     private Teacher inputTeacher = new();
     private List<Parent> parents = new();
-
     private List<Teacher>? teachers;
     private bool _loading = false;
     private bool success = false;
@@ -113,8 +114,12 @@ else
         try
         {
             _loading = true;
-            teachers = await DbContext.Teachers.ToListAsync();
+            teachers = await DbContext.Teachers
+                    .Include(t => t.RoleNavigation) // RoleNavigation は Role テーブルとのナビゲーションプロパティ
+                    .ToListAsync();
             parents = await DbContext.Parents.ToListAsync();
+
+
 
         }
         catch (Exception ex)
@@ -127,30 +132,48 @@ else
         }
     }
 
-    private void OnValidSubmit()
+    private async void OnValidSubmit()
     {
-        form.Validate();
+        await form.Validate();
         if (form.IsValid && parents != null)
         {
             var parent = parents.Find(x => x.EmailAddress == inputTeacher.AccessId);
             if (parent != null && parent.Name != null)
             {
                 inputTeacher.Name = parent.Name;
-                var existingTeacher = DbContext.Teachers
-                    .SingleOrDefault(t => t.TeacherId == inputTeacher.TeacherId);
+                inputTeacher.Email = parent.EmailAddress;
+                inputTeacher.Role = 3; // 先生
 
-                if (existingTeacher == null)
+                if (inputTeacher.TeacherId == 0)
                 {
+                    // 新しいエンティティを追加
+                    inputTeacher.TeacherId = 0; // 明示的に設定しない（冗長だが確実性のため）
                     DbContext.Teachers.Add(inputTeacher);
                 }
                 else
                 {
-                    DbContext.Entry(existingTeacher).CurrentValues.SetValues(inputTeacher);
+                    // 既存エンティティを更新
+                    var existingTeacher = await DbContext.Teachers
+                        .SingleOrDefaultAsync(t => t.TeacherId == inputTeacher.TeacherId);
+
+                    if (existingTeacher != null)
+                    {
+                        DbContext.Entry(existingTeacher).CurrentValues.SetValues(inputTeacher);
+                    }
+                    else
+                    {
+                        Snackbar.Add($"TeacherId {inputTeacher.TeacherId} に一致する教師が見つかりませんでした。", MudBlazor.Severity.Warning);
+                    }
                 }
+
+                // データベースに変更を保存
+                await DbContext.SaveChangesAsync();
             }
         }
         _loading = false;
+        StateHasChanged();
     }
+
 
 
     // メッセージ送信用
