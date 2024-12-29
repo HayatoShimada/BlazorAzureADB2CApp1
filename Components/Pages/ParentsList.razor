@@ -142,6 +142,8 @@ else
             }
         </ChildRowContent>
     </MudTable>
+
+    <UploadDialog />
 }
 
 
@@ -239,12 +241,12 @@ else
 
         var options = _maxWidth;
         var parameters = new DialogParameters
-    {
-        { "SenderId", senderId },
-        { "SenderType", senderType },
-        { "TargetId", targetId },
-        { "TargetType", targetType }
-    };
+        {
+            { "SenderId", senderId },
+            { "SenderType", senderType },
+            { "TargetId", targetId },
+            { "TargetType", targetType }
+        };
 
         var dialogReference = await DialogService.ShowAsync<SendDialog>("メッセージ送信", parameters, options);
 

@@ -16,58 +16,55 @@
 @inject ISnackbar Snackbar
 @inject BlobStorageService BlobService
 
-<MudItem xs="12">
-    <MudFileUpload 
-        T="IBrowserFile"
-        @ref="@_fileUpload"
-        OnFilesChanged="OnInputFileChanged"
-        AppendMultipleFiles
-        Hidden="@false"
-        InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
-        InputStyle="opacity:0"
-        tabindex="-1"
-        @ondrop="@ClearDragClass"
-        @ondragenter="@SetDragClass"
-        @ondragleave="@ClearDragClass"
-        @ondragend="@ClearDragClass">
+<MudFileUpload 
+    T="IBrowserFile"
+    @ref="@_fileUpload"
+    OnFilesChanged="OnInputFileChanged"
+    AppendMultipleFiles
+    Hidden="@false"
+    InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+    InputStyle="opacity:0"
+    tabindex="-1"
+    @ondrop="@ClearDragClass"
+    @ondragenter="@SetDragClass"
+    @ondragleave="@ClearDragClass"
+    @ondragend="@ClearDragClass">
 
-        <ActivatorContent>
-            <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
-                <MudText Typo="Typo.h6">
-                    Drag and drop files here or click
-                </MudText>
-                <MudChip T="string" Color="Color.Dark" Text="@_fileName" tabindex="-1" />
-            </MudPaper>
-        </ActivatorContent>
-    </MudFileUpload>
-    <MudToolBar Gutters="false" Class="relative d-flex justify-end gap-4">
-        <MudButton Color="Color.Primary" OnClick="OpenFilePickerAsync" Variant="Variant.Filled">
-            Open file picker
-        </MudButton>
-        <MudButton Color="Color.Primary" Disabled="@(_fileName == string.Empty)" OnClick="UploadAvatar" Variant="Variant.Filled">
-            Upload
-        </MudButton>
-        <MudButton Color="Color.Error" Disabled="@(_fileName == string.Empty)" OnClick="ClearAsync" Variant="Variant.Filled">
-            Clear
-        </MudButton>
-        @if (isUploading)
-        {
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-        }
-    </MudToolBar>
-</MudItem>
-<MudItem>
-    @if (_fileUpload?.ValidationErrors.Any() ?? false)
+    <ActivatorContent>
+        <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
+            <MudText Typo="Typo.h6">
+                Drag and drop files here or click
+            </MudText>
+            <MudChip T="string" Color="Color.Dark" Text="@_fileName" tabindex="-1" />
+        </MudPaper>
+    </ActivatorContent>
+</MudFileUpload>
+<MudToolBar Gutters="false" Class="relative d-flex justify-end gap-4">
+    <MudButton Color="Color.Primary" OnClick="OpenFilePickerAsync" Variant="Variant.Filled">
+        Open file picker
+    </MudButton>
+    <MudButton Color="Color.Primary" Disabled="@(_fileName == string.Empty)" OnClick="UploadAvatar" Variant="Variant.Filled">
+        Upload
+    </MudButton>
+    <MudButton Color="Color.Error" Disabled="@(_fileName == string.Empty)" OnClick="ClearAsync" Variant="Variant.Filled">
+        Clear
+    </MudButton>
+    @if (isUploading)
     {
-        <MudText Color="Color.Error" Typo="@Typo.caption">
-            @_fileUpload?.ValidationErrors[0]
-        </MudText>
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     }
-</MudItem>
+</MudToolBar>
+
+
+@if (_fileUpload?.ValidationErrors.Any() ?? false)
+{
+    <MudText Color="Color.Error" Typo="@Typo.caption">
+        @_fileUpload?.ValidationErrors[0]
+    </MudText>
+}
+
 
 @code {
-    [Inject]
-    private IDialogService DialogService { get; set; } = default!;
     [Inject]
     private IConfiguration Configuration { get; set; } = default!;
     [Inject]
@@ -78,7 +75,6 @@
 
     [CascadingParameter]
     private MudDialogInstance MudDialog { get; set; } = default!;
-
 
     private bool isUploading = false;
     private string _returnValue = string.Empty;
@@ -143,11 +139,9 @@
         }
     }
 
-
     // アバターの表示ロジック
     private bool _isBlobLoading = false;
     private BlobFileInfo _avatarFile = new();
-
 
     private async Task LoadFiles()
     {
